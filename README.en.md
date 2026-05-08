@@ -3,9 +3,6 @@
 </p>
 
 <div align="center">
-  <img src="./docs/assets/cicero-machine-icon.png" alt="Cicero Machine icon" width="112" />
-  <br />
-  <br />
   <img src="./docs/assets/cicero-machine-senate.png" alt="Two Ciceros debating in the Roman senate" width="100%" />
 
   <h1>Cicero Machine</h1>

@@ -3,9 +3,6 @@
 </p>
 
 <div align="center">
-  <img src="./docs/assets/cicero-machine-icon.png" alt="Cicero Machine icon" width="112" />
-  <br />
-  <br />
   <img src="./docs/assets/cicero-machine-senate.png" alt="ローマ元老院で討論する二人のキケロ" width="100%" />
 
   <h1>Cicero Machine</h1>
