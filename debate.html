@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="./docs/assets/cicero-machine-icon.png">
+  <title>Cicero Machine</title>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div class="brand-lockup">
+        <img class="app-icon" src="./docs/assets/cicero-machine-icon.png" alt="" aria-hidden="true">
+        <div>
+          <h1>Cicero Machine</h1>
+          <div class="subtitle">A/B search for evidence and debate; C synthesizes arguments, formulas, and the final conclusion.</div>
+          <div id="mockPill" class="mock-pill">Mock mode</div>
+        </div>
+      </div>
+      <div class="footer-actions">
+        <button id="newDebateBtn" class="ghost" type="button"><i data-lucide="rotate-ccw"></i><span>New topic</span></button>
+        <button id="exportBtn" type="button" disabled><i data-lucide="download"></i><span>Export Markdown</span></button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <div>
+        <details class="section" open>
+          <summary>
+            <span>Configuration</span>
+            <span class="hint">Saved in this browser</span>
+          </summary>
+          <div class="section-body">
+            <div class="grid cols-3">
+              <div>
+                <label for="providerSelect">LLM provider</label>
+                <select id="providerSelect"></select>
+              </div>
+              <div>
+                <label for="apiFormatSelect">API format</label>
+                <select id="apiFormatSelect">
+                  <option value="openai">OpenAI-compatible</option>
+                  <option value="anthropic">Anthropic Messages</option>
+                </select>
+              </div>
+              <div>
+                <label for="modelInput">Model</label>
+                <input id="modelInput" type="text" list="modelSuggestions" autocomplete="off" placeholder="deepseek-v4-flash">
+                <datalist id="modelSuggestions"></datalist>
+              </div>
+            </div>
+
+            <div class="grid cols-2" style="margin-top: 12px;">
+              <div>
+                <label for="baseUrlInput">Base URL</label>
+                <input id="baseUrlInput" type="url" spellcheck="false" placeholder="https://api.deepseek.com">
+              </div>
+              <div>
+                <label for="apiKeyInput">LLM API Key</label>
+                <input id="apiKeyInput" type="password" autocomplete="off" placeholder="sk-...">
+              </div>
+            </div>
+
+            <div id="deepSeekOptions" class="grid cols-2" style="margin-top: 12px;">
+              <div class="checkline">
+                <input id="deepSeekFinalThinkingInput" type="checkbox">
+                <span>Enable DeepSeek thinking for final report</span>
+              </div>
+              <div>
+                <label for="maxTokensInput">Max output tokens per call</label>
+                <input id="maxTokensInput" type="number" min="256" max="16000" step="128">
+              </div>
+            </div>
+
+            <div class="grid cols-3" style="margin-top: 12px;">
+              <div>
+                <label for="searchProviderSelect">Search mode</label>
+                <select id="searchProviderSelect">
+                  <option value="bocha">Bocha API</option>
+                  <option value="tavily">Tavily API</option>
+                  <option value="llm-native">LLM native search</option>
+                  <option value="hybrid">Hybrid mode</option>
+                </select>
+              </div>
+              <div>
+                <label for="searchApiKeyInput">Search API Key</label>
+                <input id="searchApiKeyInput" type="password" autocomplete="off" placeholder="Bocha or Tavily API Key">
+              </div>
+              <div>
+                <label for="searchCountInput">Results per query</label>
+                <input id="searchCountInput" type="number" min="1" max="10" step="1">
+              </div>
+            </div>
+
+            <div class="grid cols-3" style="margin-top: 12px;">
+              <div>
+                <label for="freshnessSelect">Bocha freshness</label>
+                <select id="freshnessSelect">
+                  <option value="noLimit">noLimit</option>
+                  <option value="oneDay">oneDay</option>
+                  <option value="oneWeek">oneWeek</option>
+                  <option value="oneMonth">oneMonth</option>
+                  <option value="oneYear">oneYear</option>
+                </select>
+              </div>
+              <div>
+                <label for="queriesPerAgentInput">Queries per agent per round</label>
+                <input id="queriesPerAgentInput" type="number" min="1" max="4" step="1">
+              </div>
+              <div class="checkline">
+                <input id="summaryInput" type="checkbox">
+                <span>Request Bocha summaries</span>
+              </div>
+            </div>
+
+            <div id="configWarning" class="warning"></div>
+          </div>
+        </details>
+
+        <section class="section">
+          <h2 class="section-title">Debate Setup</h2>
+          <div class="section-body">
+            <label for="topicInput">Topic</label>
+            <textarea id="topicInput" placeholder="Example: Will large language models replace recommendation system engineers?"></textarea>
+            <div class="grid cols-3" style="margin-top: 12px;">
+              <div>
+                <label for="roundsSelect">Debate rounds</label>
+                <select id="roundsSelect">
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5</option>
+                  <option value="6">6</option>
+                  <option value="7">7</option>
+                  <option value="8">8</option>
+                  <option value="9">9</option>
+                  <option value="10">10</option>
+                </select>
+              </div>
+              <div>
+                <label for="temperatureInput">Temperature</label>
+                <input id="temperatureInput" type="number" min="0" max="2" step="0.1">
+              </div>
+              <div>
+                <label for="timeoutInput">Request timeout in seconds</label>
+                <input id="timeoutInput" type="number" min="15" max="180" step="5">
+              </div>
+            </div>
+            <div class="controls">
+              <button id="startBtn" class="primary" type="button" disabled><i data-lucide="play"></i><span>Start debate</span></button>
+              <button id="pauseBtn" type="button" disabled><i data-lucide="pause"></i><span>Pause</span></button>
+              <button id="resumeBtn" type="button" disabled><i data-lucide="step-forward"></i><span>Resume debate</span></button>
+              <button id="stopBtn" class="danger" type="button" disabled><i data-lucide="square"></i><span>Stop debate</span></button>
+            </div>
+            <div style="margin-top: 12px;">
+              <label for="guidanceInput">Additional factors after pausing</label>
+              <textarea id="guidanceInput" placeholder="Example: Ask both sides to consider channel inventory, policy risk, valuation cycles, and user migration costs. Enter this after pausing, then resume the debate."></textarea>
+              <div id="pauseHint" class="hint">Pause takes effect at the next safe point after the current API call finishes.</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Debate Process</h2>
+          <div class="section-body">
+            <div class="status-line">
+              <div id="statusText" class="status-text">Waiting to start.</div>
+              <div id="progressText" class="hint">0 / 0</div>
+            </div>
+            <div class="progress-wrap" aria-hidden="true">
+              <div id="progressBar" class="progress-bar"></div>
+            </div>
+            <div id="messages" class="messages">
+              <div class="empty-state">The pro side, con side, and moderator messages will appear here after the debate starts.</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="finalReportSection" class="section hidden">
+          <h2 class="section-title">Final Conclusion</h2>
+          <div class="section-body">
+            <div id="finalReportPreview" class="markdown-preview"></div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="section">
+          <h2 class="section-title">Run Stats</h2>
+          <div class="section-body">
+            <div class="metrics">
+              <div class="metric">
+                <div id="roundMetric" class="metric-value">0</div>
+                <div class="metric-label">Round</div>
+              </div>
+              <div class="metric">
+                <div id="messageMetric" class="metric-value">0</div>
+                <div class="metric-label">Messages</div>
+              </div>
+              <div class="metric">
+                <div id="evidenceMetric" class="metric-value">0</div>
+                <div class="metric-label">Sources</div>
+              </div>
+            </div>
+            <div id="runMeta" class="hint">Not run yet.</div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h2 class="section-title">Evidence Pool</h2>
+          <div class="section-body">
+            <div id="sourceDock" class="source-strip">
+              <div class="source-strip-title">Source icons · S1/S2 are source IDs</div>
+              <div class="empty-state">Clickable source icons will appear after search.</div>
+            </div>
+            <div class="hint" style="margin-bottom: 10px;">S1, S2, and S3 are source IDs. Click an icon or a source chip under a message to open the original link.</div>
+            <div id="evidenceList" class="evidence-list">
+              <div class="empty-state">Web search results will be collected here.</div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

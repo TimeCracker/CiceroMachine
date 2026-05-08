@@ -1,0 +1,67 @@
+<svg width="1200" height="520" viewBox="0 0 1200 520" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Cicero Machine hero</title>
+  <desc id="desc">A visual overview of a three-agent debate system with evidence search and markdown report generation.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="520" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E8FFF5"/>
+      <stop offset="0.52" stop-color="#F7FAFF"/>
+      <stop offset="1" stop-color="#ECF3FF"/>
+    </linearGradient>
+    <linearGradient id="green" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#0F9F6E"/>
+      <stop offset="1" stop-color="#18B981"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#2563EB"/>
+      <stop offset="1" stop-color="#4F8CFF"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#D97706"/>
+      <stop offset="1" stop-color="#F59E0B"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="150%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#1F2B3E" flood-opacity="0.16"/>
+    </filter>
+  </defs>
+  <rect width="1200" height="520" rx="34" fill="url(#bg)"/>
+  <circle cx="1045" cy="70" r="142" fill="#DDEAFF" opacity="0.65"/>
+  <circle cx="115" cy="420" r="150" fill="#DDF8EB" opacity="0.7"/>
+  <rect x="74" y="66" width="1052" height="388" rx="28" fill="white" filter="url(#shadow)"/>
+  <rect x="106" y="102" width="988" height="64" rx="18" fill="#F7FAFC" stroke="#DCE4EE"/>
+  <circle cx="135" cy="134" r="7" fill="#EF4444"/>
+  <circle cx="158" cy="134" r="7" fill="#F59E0B"/>
+  <circle cx="181" cy="134" r="7" fill="#10B981"/>
+  <text x="218" y="141" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="700" fill="#172033">Cicero Machine</text>
+  <text x="392" y="141" font-family="Inter, Arial, sans-serif" font-size="15" fill="#667085">Networked Three-Agent Debate Workbench</text>
+
+  <rect x="130" y="198" width="250" height="156" rx="22" fill="#FFF4F5" stroke="#F7C8CE"/>
+  <rect x="154" y="222" width="54" height="54" rx="16" fill="#D84F5F"/>
+  <text x="174" y="257" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="white">A</text>
+  <text x="224" y="240" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#172033">Pro Agent</text>
+  <text x="224" y="266" font-family="Inter, Arial, sans-serif" font-size="14" fill="#667085">Search evidence, defend</text>
+  <text x="154" y="315" font-family="Inter, Arial, sans-serif" font-size="13" fill="#8A3340">claims, formulas, source citations</text>
+
+  <rect x="475" y="198" width="250" height="156" rx="22" fill="#ECFFFB" stroke="#B7EFE5"/>
+  <rect x="499" y="222" width="54" height="54" rx="16" fill="#098A82"/>
+  <text x="519" y="257" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="white">B</text>
+  <text x="569" y="240" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#172033">Con Agent</text>
+  <text x="569" y="266" font-family="Inter, Arial, sans-serif" font-size="14" fill="#667085">Counter-search, challenge</text>
+  <text x="499" y="315" font-family="Inter, Arial, sans-serif" font-size="13" fill="#166B64">risks, tradeoffs, weak assumptions</text>
+
+  <rect x="820" y="198" width="250" height="156" rx="22" fill="#FFF8E6" stroke="#F8DF9E"/>
+  <rect x="844" y="222" width="54" height="54" rx="16" fill="#D97706"/>
+  <text x="864" y="257" font-family="Inter, Arial, sans-serif" font-size="28" font-weight="800" fill="white">C</text>
+  <text x="914" y="240" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#172033">Moderator</text>
+  <text x="914" y="266" font-family="Inter, Arial, sans-serif" font-size="14" fill="#667085">Guide rounds, synthesize</text>
+  <text x="844" y="315" font-family="Inter, Arial, sans-serif" font-size="13" fill="#8A5600">markdown report, evidence audit</text>
+
+  <path d="M386 276H463" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M731 276H808" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+  <path d="M600 363V398" stroke="#94A3B8" stroke-width="3" stroke-linecap="round"/>
+  <rect x="376" y="398" width="448" height="44" rx="14" fill="#F8FAFC" stroke="#DCE4EE"/>
+  <text x="402" y="426" font-family="Inter, Arial, sans-serif" font-size="15" font-weight="700" fill="#172033">Bocha / Tavily / Native Search</text>
+  <text x="634" y="426" font-family="Inter, Arial, sans-serif" font-size="15" fill="#667085">source-linked evidence pool</text>
+
+  <text x="130" y="404" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="850" fill="#111827">Debate with evidence, not vibes.</text>
+  <text x="130" y="432" font-family="Inter, Arial, sans-serif" font-size="16" fill="#536071">Three agents, live web search, clickable sources, and a rendered Markdown conclusion.</text>
+</svg>
