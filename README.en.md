@@ -3,7 +3,7 @@
 </p>
 
 <div align="center">
-  <img src="./docs/assets/cicero-machine-senate.png" alt="Two Ciceros debating in the Roman senate" width="100%" />
+  <img src="./docs/assets/cicero-machine-senate.png" alt="8-bit pixel art of two Ciceros debating in the Roman senate" width="100%" />
 
   <h1>Cicero Machine</h1>
 

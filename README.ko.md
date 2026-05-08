@@ -3,7 +3,7 @@
 </p>
 
 <div align="center">
-  <img src="./docs/assets/cicero-machine-senate.png" alt="로마 원로원에서 토론하는 두 명의 키케로" width="100%" />
+  <img src="./docs/assets/cicero-machine-senate.png" alt="8비트 픽셀 아트 스타일로 로마 원로원에서 토론하는 두 명의 키케로" width="100%" />
 
   <h1>Cicero Machine</h1>
 

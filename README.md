@@ -3,7 +3,7 @@
 </p>
 
 <div align="center">
-  <img src="./docs/assets/cicero-machine-senate.png" alt="两个西塞罗在罗马元老院中辩论" width="100%" />
+  <img src="./docs/assets/cicero-machine-senate.png" alt="八位机像素风格的两个西塞罗在罗马元老院中辩论" width="100%" />
 
   <h1>Cicero Machine</h1>
 
