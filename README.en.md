@@ -254,4 +254,4 @@ The core design goal is to stay explainable, traceable, and exportable:
 
 ## License
 
-No license has been declared yet. Add a `LICENSE` file before public release.
+This project is open-sourced under the [MIT License](./LICENSE).

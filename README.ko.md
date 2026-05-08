@@ -186,4 +186,4 @@ npm start
 
 ## License
 
-아직 라이선스가 선언되지 않았습니다. 공개 배포 전 `LICENSE` 파일을 추가하는 것을 권장합니다.
+이 프로젝트는 [MIT License](./LICENSE)로 공개됩니다.

@@ -277,4 +277,4 @@ SSE event 类型包括 `status`、`progress`、`message`、`evidence`、`warning
 
 ## License
 
-当前仓库尚未声明许可证。公开发布前建议补充 `LICENSE` 文件。
+本项目基于 [MIT License](./LICENSE) 开源。

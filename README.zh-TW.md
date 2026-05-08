@@ -186,4 +186,4 @@ npm start
 
 ## License
 
-目前尚未宣告授權條款。公開發布前建議補充 `LICENSE` 文件。
+本專案基於 [MIT License](./LICENSE) 開源。
