@@ -8,6 +8,11 @@
   <h1>Cicero Machine</h1>
 
   <p>
+    <em>"In disputando veritas gignitur."</em><br />
+    Truth is born in debate—Cicero（Marcus Tullius Cicero）
+  </p>
+
+  <p>
     <strong>Backend Three-Agent Debate Workbench</strong><br />
     Let two opposing agents search and debate in speaking order, then let a moderator synthesize sources, formulas, and a final conclusion.
   </p>

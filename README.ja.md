@@ -8,6 +8,11 @@
   <h1>Cicero Machine</h1>
 
   <p>
+    <em>"In disputando veritas gignitur."</em><br />
+    真理は討論の中で生まれる——キケロ（Marcus Tullius Cicero）
+  </p>
+
+  <p>
     <strong>バックエンド型 3 独立 Agent 討論ワークベンチ</strong><br />
     賛成・反対の Agent が発言順に検索して討論し、Moderator が証拠、数式、最終結論をまとめます。
   </p>

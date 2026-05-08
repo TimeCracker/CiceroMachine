@@ -8,6 +8,11 @@
   <h1>Cicero Machine</h1>
 
   <p>
+    <em>"In disputando veritas gignitur."</em><br />
+    진리는 토론 속에서 태어난다——키케로（Marcus Tullius Cicero）
+  </p>
+
+  <p>
     <strong>백엔드 기반 3개 독립 Agent 토론 워크벤치</strong><br />
     찬반 Agent가 발언 순서에 맞춰 검색하고 토론한 뒤, Moderator가 근거, 공식, 최종 결론을 정리합니다.
   </p>

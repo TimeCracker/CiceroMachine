@@ -8,6 +8,11 @@
   <h1>Cicero Machine</h1>
 
   <p>
+    <em>"In disputando veritas gignitur."</em><br />
+    真理在辩论中诞生——西塞罗（Marcus Tullius Cicero）
+  </p>
+
+  <p>
     <strong>后端三独立 Agent 辩论工作台</strong><br />
     让正反双方按发言顺序联网检索和辩论，再由主持人汇总证据、公式与最终结论。
   </p>
