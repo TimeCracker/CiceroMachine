@@ -86,16 +86,23 @@ A/B/C 不共享私有对话历史，只通过后端 orchestrator 交换公开发
 
 <table>
   <tr>
-    <td width="38%" valign="top">
+    <td width="30%" valign="top">
+      <a href="./docs/assets/demo-workbench-and-final-report.jpg">
+        <img src="./docs/assets/demo-workbench-and-final-report.jpg" alt="Cicero Machine workbench with final report demo screenshot" width="360" />
+      </a>
+      <br />
+      <sub>工作台与最终结论：从辩论到结构化报告的完整视图。</sub>
+    </td>
+    <td width="35%" valign="top">
       <a href="./docs/assets/demo-workbench.jpg">
         <img src="./docs/assets/demo-workbench.jpg" alt="Cicero Machine full debate workbench demo screenshot" width="360" />
       </a>
       <br />
       <sub>完整辩论工作台：配置、A/B/C 发言、source 引用、证据池与最终结论。</sub>
     </td>
-    <td width="62%" valign="top">
+    <td width="35%" valign="top">
       <a href="./docs/assets/demo-final-report.jpg">
-        <img src="./docs/assets/demo-final-report.jpg" alt="Cicero Machine rendered final markdown report demo screenshot" width="720" />
+        <img src="./docs/assets/demo-final-report.jpg" alt="Cicero Machine rendered final markdown report demo screenshot" width="360" />
       </a>
       <br />
       <sub>最终结论 Markdown 渲染：表格、列表、source chip 和后续研究建议。</sub>
