@@ -171,6 +171,7 @@ export interface Elements {
   guidanceInput: HTMLTextAreaElement;
   pauseHint: HTMLElement;
   newDebateBtn: HTMLButtonElement;
+  exportSimplifiedInput: HTMLInputElement;
   exportBtn: HTMLButtonElement;
   statusText: HTMLElement;
   progressText: HTMLElement;

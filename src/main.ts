@@ -73,6 +73,7 @@ const els: Elements = {
   guidanceInput: getEl("guidanceInput"),
   pauseHint: getEl("pauseHint"),
   newDebateBtn: getEl("newDebateBtn"),
+  exportSimplifiedInput: getEl("exportSimplifiedInput"),
   exportBtn: getEl("exportBtn"),
   statusText: getEl("statusText"),
   progressText: getEl("progressText"),
@@ -418,15 +419,21 @@ function handleRunError(error: unknown) {
 
 async function exportMarkdown() {
   if (!state.currentDebateId || !state.debate) return;
-  const filename = `debate-${safeFileName(state.debate.topic)}.md`;
+  const simplified = els.exportSimplifiedInput.checked;
+  const suffix = simplified ? "-simplified" : "";
+  const filename = `debate-${safeFileName(state.debate.topic)}${suffix}.md`;
   els.exportBtn.disabled = true;
   try {
     let markdown = "";
-    try {
-      markdown = await fetchDebateMarkdown(state.currentDebateId);
-    } catch (error) {
-      markdown = buildClientMarkdown(state.debate);
-      setStatus(`Backend export unavailable; downloaded the browser snapshot instead: ${formatErrorMessage(error)}`);
+    if (simplified) {
+      markdown = buildSimplifiedMarkdown(state.debate);
+    } else {
+      try {
+        markdown = await fetchDebateMarkdown(state.currentDebateId);
+      } catch (error) {
+        markdown = buildClientMarkdown(state.debate);
+        setStatus(`Backend export unavailable; downloaded the browser snapshot instead: ${formatErrorMessage(error)}`);
+      }
     }
     const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -501,6 +508,15 @@ function buildClientMarkdown(debate: DebateRecord) {
     if (item.summary || item.snippet) lines.push(`  - Summary: ${item.summary || item.snippet}`);
   }
   return lines.join("\n");
+}
+
+function stripSourceReferences(text: string) {
+  return text.replace(/\[S\d+\]/g, "").replace(/  +/g, " ").replace(/ +$/gm, "").replace(/^ +$/gm, "");
+}
+
+function buildSimplifiedMarkdown(debate: DebateRecord) {
+  if (!debate.finalReport) return "";
+  return `# ${debate.topic}\n\n${stripSourceReferences(debate.finalReport)}\n`;
 }
 
 async function restoreLastSession() {
