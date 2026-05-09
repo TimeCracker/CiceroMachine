@@ -511,7 +511,12 @@ function buildClientMarkdown(debate: DebateRecord) {
 }
 
 function stripSourceReferences(text: string) {
-  return text.replace(/\[S\d+\]/g, "").replace(/  +/g, " ").replace(/ +$/gm, "").replace(/^ +$/gm, "");
+  return text
+    .replace(/\[S\d+\]/g, "")
+    .replace(/\[(?:Pro|Con|Moderator)\s+[ABC]\s*·\s*Round\s+\d+\]/gi, "")
+    .replace(/  +/g, " ")
+    .replace(/ +$/gm, "")
+    .replace(/^ +$/gm, "");
 }
 
 function buildSimplifiedMarkdown(debate: DebateRecord) {
