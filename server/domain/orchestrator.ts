@@ -37,7 +37,9 @@ export class DebateSession {
         searchProvider: config.searchProvider,
         searchCount: config.searchCount,
         freshness: config.freshness,
-        queriesPerAgent: config.queriesPerAgent
+        queriesPerAgent: config.queriesPerAgent,
+        responseWordLimitEnabled: config.responseWordLimitEnabled,
+        responseWordLimit: config.responseWordLimit
       },
       messages: [],
       evidence: this.registry.list(),
@@ -75,7 +77,10 @@ export class DebateSession {
     this.syncAgentStates();
     return {
       id: this.id,
-      debate: this.record
+      debate: this.record,
+      running: this.running,
+      paused: this.paused,
+      pauseRequested: this.pauseRequested
     };
   }
 
@@ -331,8 +336,19 @@ export class DebateSession {
   }
 }
 
-function extractModeratorGuidance(content: string) {
+export function extractModeratorGuidance(content: string) {
   const text = String(content || "").trim();
+  const structuredMatch = text.match(/(?:^|\n)\s*(?:[-*]\s*)?(?:\*\*)?\(?c\)?[.)]?\s*[^:：\n]*[:：]\s*([\s\S]+)$/i);
+  if (structuredMatch) {
+    return truncate(
+      structuredMatch[1]
+        .replace(/^#+\s*/gm, "")
+        .replace(/\*\*/g, "")
+        .replace(/\n{3,}/g, "\n\n")
+        .trim(),
+      900
+    );
+  }
   const match = text.match(/(?:next(?:\s+question|\s+focus|\s+angle)?|follow-up|下一步(?:追问|关注|检验)?(?:角度|方向|问题)?|追问角度|后续(?:追问|检验|关注))(?:[:：\s]*)([\s\S]+)$/i);
   const extracted = match ? match[1] : text;
   return truncate(

@@ -4,13 +4,14 @@ import { mountIcons } from './ui/icons';
 import { renderInlineMarkdown as renderInlineMarkdownHtml, renderMarkdown as renderMarkdownHtml } from './ui/markdown';
 import {
   createDebateSession,
+  fetchDebateSession,
   fetchDebateMarkdown,
   openDebateEvents,
   pauseDebate,
   resumeDebateSession,
   stopDebateSession
 } from './services/debateClient';
-import type { AppState, DebateMessage, DebateSessionEvent, Elements, EvidenceItem } from './types';
+import type { AppState, DebateMessage, DebateRecord, DebateSessionEvent, Elements, EvidenceItem } from './types';
 
 declare global {
   interface Window {
@@ -25,6 +26,7 @@ const getEl = <T extends HTMLElement = any>(id: string): T => {
 };
 
 const isMockMode = new URLSearchParams(window.location.search).has("mock");
+const SESSION_KEY = "cicero_machine_last_session_v1";
 
 const state: AppState = {
   config: { ...DEFAULT_CONFIG },
@@ -35,6 +37,10 @@ const state: AppState = {
   currentDebateId: "",
   eventSource: null
 };
+
+const collapsedMessageIds = new Set<string>();
+let finalReportCollapsed = false;
+let activityText = "Waiting to start.";
 
 const els: Elements = {
   mockPill: getEl("mockPill"),
@@ -47,6 +53,8 @@ const els: Elements = {
   deepSeekOptions: getEl("deepSeekOptions"),
   deepSeekFinalThinkingInput: getEl("deepSeekFinalThinkingInput"),
   maxTokensInput: getEl("maxTokensInput"),
+  responseWordLimitEnabledInput: getEl("responseWordLimitEnabledInput"),
+  responseWordLimitInput: getEl("responseWordLimitInput"),
   searchProviderSelect: getEl("searchProviderSelect"),
   searchApiKeyInput: getEl("searchApiKeyInput"),
   searchCountInput: getEl("searchCountInput"),
@@ -69,8 +77,10 @@ const els: Elements = {
   statusText: getEl("statusText"),
   progressText: getEl("progressText"),
   progressBar: getEl("progressBar"),
+  collapseRepliesBtn: getEl("collapseRepliesBtn"),
   messages: getEl("messages"),
   finalReportSection: getEl("finalReportSection"),
+  finalReportToggleBtn: getEl("finalReportToggleBtn"),
   finalReportPreview: getEl("finalReportPreview"),
   evidenceList: getEl("evidenceList"),
   sourceDock: getEl("sourceDock"),
@@ -93,6 +103,9 @@ function init() {
   refreshSearchUI();
   updateStartState();
   exposeDebugApi();
+  restoreLastSession().catch(() => {
+    localStorage.removeItem(SESSION_KEY);
+  });
 }
 
 function populateProviders() {
@@ -123,6 +136,8 @@ function bindEvents() {
     els.modelInput,
     els.deepSeekFinalThinkingInput,
     els.maxTokensInput,
+    els.responseWordLimitEnabledInput,
+    els.responseWordLimitInput,
     els.searchProviderSelect,
     els.searchApiKeyInput,
     els.searchCountInput,
@@ -138,12 +153,14 @@ function bindEvents() {
       saveConfigFromUI();
       refreshProviderUI();
       refreshSearchUI();
+      refreshReplyLimitUI();
       updateStartState();
     });
     el.addEventListener("change", () => {
       saveConfigFromUI();
       refreshProviderUI();
       refreshSearchUI();
+      refreshReplyLimitUI();
       updateStartState();
     });
   });
@@ -156,6 +173,18 @@ function bindEvents() {
   els.stopBtn.addEventListener("click", stopDebate);
   els.newDebateBtn.addEventListener("click", () => resetDebateView());
   els.exportBtn.addEventListener("click", exportMarkdown);
+  els.collapseRepliesBtn.addEventListener("click", toggleAllReplies);
+  els.finalReportToggleBtn.addEventListener("click", toggleFinalReport);
+  els.messages.addEventListener("click", (event) => {
+    const target = event.target as HTMLElement;
+    const button = target.closest<HTMLButtonElement>("[data-message-collapse]");
+    if (!button) return;
+    const id = button.dataset.messageId;
+    if (!id) return;
+    if (collapsedMessageIds.has(id)) collapsedMessageIds.delete(id);
+    else collapsedMessageIds.add(id);
+    renderMessages(false);
+  });
 }
 
 function loadConfig() {
@@ -176,6 +205,9 @@ function writeConfigToUI() {
   els.modelInput.value = cfg.model;
   els.deepSeekFinalThinkingInput.checked = Boolean(cfg.deepSeekFinalThinking);
   els.maxTokensInput.value = String(cfg.maxTokens);
+  els.responseWordLimitEnabledInput.checked = Boolean(cfg.responseWordLimitEnabled);
+  els.responseWordLimitInput.value = String(cfg.responseWordLimit);
+  refreshReplyLimitUI();
   els.searchProviderSelect.value = cfg.searchProvider;
   els.searchApiKeyInput.value = cfg.searchApiKey;
   els.searchCountInput.value = String(cfg.searchCount);
@@ -197,6 +229,8 @@ function saveConfigFromUI() {
     apiKey: els.apiKeyInput.value.trim(),
     model: stripDeprecatedNote(els.modelInput.value.trim()),
     maxTokens: clampNumber(els.maxTokensInput.value, 256, 16000, DEFAULT_CONFIG.maxTokens),
+    responseWordLimitEnabled: els.responseWordLimitEnabledInput.checked,
+    responseWordLimit: clampNumber(els.responseWordLimitInput.value, 120, 2000, DEFAULT_CONFIG.responseWordLimit),
     temperature: clampNumber(els.temperatureInput.value, 0, 2, DEFAULT_CONFIG.temperature),
     timeoutSeconds: clampNumber(els.timeoutInput.value, 15, 180, DEFAULT_CONFIG.timeoutSeconds),
     deepSeekFinalThinking: els.deepSeekFinalThinkingInput.checked,
@@ -245,6 +279,10 @@ function refreshSearchUI() {
   els.summaryInput.disabled = provider === "tavily" || provider === "llm-native";
 }
 
+function refreshReplyLimitUI() {
+  els.responseWordLimitInput.disabled = !els.responseWordLimitEnabledInput.checked;
+}
+
 function updateStartState() {
   const cfg = readCurrentConfig();
   const missingLLM = !cfg.apiKey || !cfg.model || !cfg.baseURL || !cfg.topic;
@@ -276,6 +314,7 @@ async function runDebate() {
   updateStartState();
   const snapshot = await createDebateSession(cfg, isMockMode);
   state.currentDebateId = snapshot.id;
+  localStorage.setItem(SESSION_KEY, snapshot.id);
   state.debate = snapshot.debate;
   connectEventStream(snapshot.id);
   renderAll();
@@ -379,16 +418,110 @@ function handleRunError(error: unknown) {
 
 async function exportMarkdown() {
   if (!state.currentDebateId || !state.debate) return;
-  const md = await fetchDebateMarkdown(state.currentDebateId);
-  const blob = new Blob([md], { type: "text/markdown;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `debate-${safeFileName(state.debate.topic)}.md`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const filename = `debate-${safeFileName(state.debate.topic)}.md`;
+  els.exportBtn.disabled = true;
+  try {
+    let markdown = "";
+    try {
+      markdown = await fetchDebateMarkdown(state.currentDebateId);
+    } catch (error) {
+      markdown = buildClientMarkdown(state.debate);
+      setStatus(`Backend export unavailable; downloaded the browser snapshot instead: ${formatErrorMessage(error)}`);
+    }
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    setStatus(`Export failed: ${formatErrorMessage(error)}`);
+  } finally {
+    updateStartState();
+  }
+}
+
+function buildClientMarkdown(debate: DebateRecord) {
+  const lines: string[] = [];
+  lines.push(`# Debate Report: ${debate.topic}`);
+  lines.push("");
+  lines.push(`- Started: ${debate.startedAt}`);
+  lines.push(`- Ended: ${debate.endedAt || "incomplete"}`);
+  lines.push(`- LLM: ${debate.configSummary.provider} / ${debate.configSummary.model}`);
+  lines.push(`- API format: ${debate.configSummary.apiFormat}`);
+  lines.push(`- Search mode: ${debate.configSummary.searchProvider}`);
+  if (debate.configSummary.responseWordLimitEnabled) {
+    lines.push(`- Reply limit except final: ${debate.configSummary.responseWordLimit}`);
+  }
+  lines.push("");
+  if (debate.finalReport) {
+    lines.push("## Final Conclusion");
+    lines.push("");
+    lines.push(debate.finalReport);
+    lines.push("");
+  }
+  if (debate.guidance.length) {
+    lines.push("## User Factors");
+    lines.push("");
+    for (const item of debate.guidance) {
+      lines.push(`- ${item.id} · round ${item.round} · ${item.createdAt}: ${item.text}`);
+    }
+    lines.push("");
+  }
+  if (debate.moderatorGuidance.length) {
+    lines.push("## Moderator Guidance");
+    lines.push("");
+    for (const item of debate.moderatorGuidance) {
+      lines.push(`- ${item.id} · round ${item.round} · ${item.createdAt}: ${item.content}`);
+    }
+    lines.push("");
+  }
+  lines.push("## Debate Transcript");
+  lines.push("");
+  for (const message of debate.messages) {
+    lines.push(`### ${labelForMessage(message)} · round ${message.round} · ${message.createdAt}`);
+    lines.push("");
+    lines.push(message.content);
+    lines.push("");
+    if (message.evidenceIds.length) {
+      lines.push(`Sources: ${message.evidenceIds.map((id) => `[${id}]`).join(" ")}`);
+      lines.push("");
+    }
+  }
+  lines.push("## Evidence");
+  lines.push("");
+  for (const item of debate.evidence) {
+    lines.push(`- [${item.id}] ${item.title}`);
+    lines.push(`  - URL: ${item.url || "none"}`);
+    lines.push(`  - Provider: ${item.provider}`);
+    lines.push(`  - Found by: ${formatEvidenceUses(item)}`);
+    if (item.summary || item.snippet) lines.push(`  - Summary: ${item.summary || item.snippet}`);
+  }
+  return lines.join("\n");
+}
+
+async function restoreLastSession() {
+  if (state.debate || state.running || state.currentDebateId) return;
+  const id = localStorage.getItem(SESSION_KEY);
+  if (!id) return;
+  const snapshot = await fetchDebateSession(id);
+  state.currentDebateId = snapshot.id;
+  state.debate = snapshot.debate;
+  state.running = Boolean(snapshot.running);
+  state.paused = Boolean(snapshot.paused);
+  state.pauseRequested = Boolean(snapshot.pauseRequested);
+  if (state.running || state.paused) {
+    setStatus(state.paused ? "Restored a paused debate session." : "Restored a running debate session.");
+    connectEventStream(snapshot.id);
+  } else {
+    setStatus(snapshot.debate.endedAt ? "Restored the latest completed debate session." : "Restored the latest debate session.");
+  }
+  updateProgress(snapshot.debate.currentRound || 0, snapshot.debate.totalRounds || 0);
+  renderAll();
+  updateStartState();
 }
 
 function renderAll() {
@@ -400,35 +533,80 @@ function renderAll() {
   els.exportBtn.disabled = !state.debate || (!state.debate.messages.length && !state.debate.finalReport);
 }
 
-function renderMessages() {
+function renderMessages(scrollToEnd = true) {
   const messages = state.debate ? visibleDebateMessages(state.debate.messages) : [];
+  renderCollapseRepliesControl(messages);
+  const workingMarker = renderWorkingMarker();
   if (!state.debate || messages.length === 0) {
-    els.messages.innerHTML = '<div class="empty-state">The pro side, con side, and moderator messages will appear here after the debate starts.</div>';
+    els.messages.innerHTML = [
+      '<div class="empty-state">The pro side, con side, and moderator messages will appear here after the debate starts.</div>',
+      workingMarker
+    ].filter(Boolean).join("");
+    mountIcons();
     return;
   }
   els.messages.innerHTML = messages.map((message) => {
     const cls = message.type === "error" ? "error" : `agent-${String(message.agent).toLowerCase()}`;
     const label = labelForMessage(message);
+    const collapsed = collapsedMessageIds.has(message.id);
     const tags = (message.evidenceIds || []).map((id) => {
       const evidence = state.debate?.evidence.find((item) => item.id === id);
       const title = evidence ? `${id} · ${evidence.title}` : id;
       return renderSourceChip(evidence || null, id, title);
     }).join("");
     return [
-      `<article class="message ${cls}">`,
+      `<article class="message ${cls}${collapsed ? " collapsed" : ""}">`,
       '<div class="message-head">',
       `<span class="badge">${escapeHtml(label)}</span>`,
+      '<div class="message-actions">',
       `<span class="time">${escapeHtml(formatTime(message.createdAt))}</span>`,
+      `<button class="ghost compact message-toggle" type="button" data-message-collapse data-message-id="${escapeAttr(message.id)}" aria-expanded="${collapsed ? "false" : "true"}" title="${collapsed ? "Expand reply" : "Collapse reply"}"><i data-lucide="${collapsed ? "chevron-down" : "chevron-up"}"></i><span>${collapsed ? "Expand" : "Collapse"}</span></button>`,
+      '</div>',
       '</div>',
       `<div class="content">${renderInlineMarkdown(message.content)}</div>`,
       tags ? `<div class="evidence-tags">${tags}</div>` : "",
       '</article>'
     ].join("");
-  }).join("");
-  requestAnimationFrame(() => {
-    const last = els.messages.lastElementChild;
-    if (last) last.scrollIntoView({ block: "nearest" });
-  });
+  }).join("") + workingMarker;
+  mountIcons();
+  if (scrollToEnd) {
+    requestAnimationFrame(() => {
+      const last = els.messages.lastElementChild;
+      if (last) last.scrollIntoView({ block: "nearest" });
+    });
+  }
+}
+
+function renderWorkingMarker() {
+  if (!state.debate || !state.running || state.paused) return "";
+  const text = activityText || "Generating next reply.";
+  return [
+    '<div class="working-marker" role="status" aria-live="polite">',
+    '<span class="breathing-dot" aria-hidden="true"></span>',
+    `<span class="working-text">${escapeHtml(text)}</span>`,
+    '<span class="typing-dots" aria-hidden="true"><span></span><span></span><span></span></span>',
+    '</div>'
+  ].join("");
+}
+
+function renderCollapseRepliesControl(messages: DebateMessage[]) {
+  const hasMessages = messages.length > 0;
+  const allCollapsed = hasMessages && messages.every((message) => collapsedMessageIds.has(message.id));
+  els.collapseRepliesBtn.disabled = !hasMessages;
+  els.collapseRepliesBtn.innerHTML = allCollapsed
+    ? '<i data-lucide="chevrons-down"></i><span>Expand replies</span>'
+    : '<i data-lucide="chevrons-up"></i><span>Collapse replies</span>';
+}
+
+function toggleAllReplies() {
+  const messages = state.debate ? visibleDebateMessages(state.debate.messages) : [];
+  if (!messages.length) return;
+  const allCollapsed = messages.every((message) => collapsedMessageIds.has(message.id));
+  for (const message of messages) {
+    if (allCollapsed) collapsedMessageIds.delete(message.id);
+    else collapsedMessageIds.add(message.id);
+  }
+  renderMessages(false);
 }
 
 function visibleDebateMessages(messages: DebateMessage[]) {
@@ -439,11 +617,37 @@ function renderFinalReport() {
   const report = state.debate && state.debate.finalReport;
   if (!report) {
     els.finalReportSection.classList.add("hidden");
+    els.finalReportPreview.parentElement?.classList.remove("hidden");
     els.finalReportPreview.innerHTML = "";
+    finalReportCollapsed = false;
+    renderFinalReportToggle();
     return;
   }
   els.finalReportSection.classList.remove("hidden");
+  renderFinalReportToggle();
+  if (finalReportCollapsed) {
+    els.finalReportPreview.parentElement?.classList.add("hidden");
+    els.finalReportPreview.classList.add("hidden");
+    els.finalReportPreview.innerHTML = "";
+    mountIcons();
+    return;
+  }
+  els.finalReportPreview.parentElement?.classList.remove("hidden");
+  els.finalReportPreview.classList.remove("hidden");
   els.finalReportPreview.innerHTML = renderMarkdown(report);
+  mountIcons();
+}
+
+function renderFinalReportToggle() {
+  els.finalReportToggleBtn.setAttribute("aria-expanded", finalReportCollapsed ? "false" : "true");
+  els.finalReportToggleBtn.innerHTML = finalReportCollapsed
+    ? '<i data-lucide="chevron-down"></i><span>Expand</span>'
+    : '<i data-lucide="chevron-up"></i><span>Collapse</span>';
+}
+
+function toggleFinalReport() {
+  finalReportCollapsed = !finalReportCollapsed;
+  renderFinalReport();
 }
 
 function renderMarkdown(markdown: string) {
@@ -563,6 +767,7 @@ function updateProgress(done: number, total: number) {
 }
 
 function setStatus(text: string) {
+  activityText = text;
   els.statusText.textContent = text;
 }
 
@@ -574,7 +779,8 @@ function setRunMeta() {
   const cfg = state.debate.configSummary;
   const warningText = state.debate.warnings && state.debate.warnings.length ? ` · warnings ${state.debate.warnings.length}` : "";
   const agentText = state.debate.agentStates ? " · 3 backend agents" : "";
-  els.runMeta.textContent = `${cfg.provider} · ${cfg.model} · search: ${cfg.searchProvider} · ${state.debate.totalRounds} rounds${agentText}${warningText}`;
+  const replyLimitText = cfg.responseWordLimitEnabled ? ` · reply cap ${cfg.responseWordLimit}` : "";
+  els.runMeta.textContent = `${cfg.provider} · ${cfg.model} · search: ${cfg.searchProvider} · ${state.debate.totalRounds} rounds${replyLimitText}${agentText}${warningText}`;
 }
 
 function resetDebateView(options: { keepTopic?: boolean; keepConfig?: boolean } = {}) {
@@ -591,6 +797,9 @@ function resetDebateView(options: { keepTopic?: boolean; keepConfig?: boolean } 
   state.pauseRequested = false;
   state.currentDebateId = "";
   state.debate = null;
+  localStorage.removeItem(SESSION_KEY);
+  collapsedMessageIds.clear();
+  finalReportCollapsed = false;
   if (!options.keepTopic) els.topicInput.value = topic;
   if (!options.keepConfig) saveConfigFromUI();
   setStatus("Waiting to start.");

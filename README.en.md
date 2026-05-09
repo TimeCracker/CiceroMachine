@@ -13,8 +13,8 @@
   </p>
 
   <p>
-    <strong>Backend Three-Agent Debate Workbench</strong><br />
-    Let two opposing agents search and debate in speaking order, then let a moderator synthesize sources, formulas, and a final conclusion.
+    <strong>Evidence-grounded three-agent adversarial-convergence workbench</strong><br />
+    Conflict is the method for surfacing information; convergence is the goal for approaching truth.
   </p>
 
   <p>
@@ -29,15 +29,29 @@
 
 ## What is this?
 
-Cicero Machine is a research and debate tool built as a backend agent service plus a frontend workbench. After you enter a topic and API keys, the backend creates an in-memory debate session and runs three independent AgentRuntime instances:
+Cicero Machine is a research and debate tool built as a backend agent service plus a frontend workbench. After you enter a topic and API keys, the backend creates an in-memory debate session and runs three independent AgentRuntime instances. Its core design philosophy is: **make adversarial pressure long enough to surface information, then converge precisely enough to approach truth.**
+
+The frontend workbench handles configuration, pause/resume, SSE rendering, source links, collapsible replies, final-report preview, and Markdown export. The backend handles three-agent orchestration, web search, evidence registration, audits, convergence, and report generation.
 
 | Agent | Role | Private state | What it does |
 | --- | --- | --- | --- |
-| A | Pro | Independent history, memory, source pool, search log | Searches supporting evidence before its turn, builds the affirmative case, and responds to challenges |
-| B | Con | Independent history, memory, source pool, search log | Searches counter-evidence after reading A's current speech, attacks assumptions, and builds the opposing case |
-| C | Moderator | Independent memory, guidance, audit log | Reviews rounds, proposes follow-up directions, and produces the final Markdown research report |
+| A | Pro | Independent history, memory, source pool, search log | Searches supporting evidence before its turn, builds the affirmative case, responds to challenges, and concedes what it cannot fully refute |
+| B | Con | Independent history, memory, source pool, search log | Searches counter-evidence after reading A's current speech, attacks assumptions, and states the boundary conditions of its own position |
+| C | Moderator | Independent memory, guidance, audit log | Audits each round, identifies blind spots, proposes next-round questions, and produces a structured Markdown research report |
 
 A/B/C do not share private conversation history. They only exchange public speeches, global source IDs, user-added factors, and moderator guidance through the backend orchestrator. One DeepSeek or other LLM API key can be shared by all three agents.
+
+## Debate Mechanics
+
+The debate runs in three phases:
+
+| Phase | Purpose | Rules |
+| --- | --- | --- |
+| Opening round | Establish each side's initial analytical frame | A/B search evidence, state core variables, formulas, and initial boundaries, and make a necessary concession |
+| Clash rounds | Keep conflict long enough to expose missing information and reasoning errors | Each speech steel-mans the opponent's strongest point before rebutting; every speech ends with a concrete concession; the moderator audits core disagreement, logic, shared blind spots, and the next follow-up angle |
+| Convergence round | Map the exact boundary of each position | A/B stop pure attack, answer when the opponent would be correct, state when their own position holds, and name the unresolved factual question that would decide the issue |
+
+The final moderator report uses a fixed structure: factual consensus, factual disputes, value and stance disputes, evidence and formula table, conditional conclusions, unresolved questions, balanced assessment and final conclusion, and methodology limitations. Every factual judgment must cite source IDs such as `[S1]` and `[S2]`.
 
 Use it for:
 
@@ -50,15 +64,23 @@ Use it for:
 
 - **Three independent AgentRuntime instances**: A/B/C keep separate history, memory, evidence pools, search logs, and audit state on the backend.
 - **Serial search by speaking order**: In each round, A searches and speaks first; B reads A's current speech, then searches and rebuts. This reduces the chance of hitting search API concurrency limits.
+- **Steel-man plus mandatory concessions**: A/B must restate the opponent's strongest point before rebutting, and every speech must acknowledge one opposing argument it cannot fully refute.
+- **Moderator logic audit**: C's inter-round commentary always covers core disagreement, logic audit, shared blind spot, and follow-up angle; the blind spot and follow-up feed the next round.
+- **Final-round conditional convergence**: A/B must state when each side would be correct, preventing complex questions from collapsing into absolute victory claims.
 - **Web evidence search**: Supports Bocha API, Tavily API, OpenAI/Anthropic native search, and hybrid mode.
 - **DeepSeek ready**: Defaults to DeepSeek OpenAI-compatible Chat Completions, and one API key can power all agents.
 - **Global source IDs**: The backend `EvidenceRegistry` assigns `S1/S2/S3...`, deduplicates URLs globally, and records which agent, round, and query discovered or cited each source.
 - **Clickable sources**: Inline `[S1]`, `[S2]` references render as source links.
 - **Moderator guidance feeds the next round**: C's follow-up questions are broadcast to A/B and injected into the next search and speech tasks.
+- **Search-planning fallback**: If the LLM call that plans search queries fails, local fallback queries keep the debate moving instead of interrupting the session.
 - **Pause and resume**: Pause the debate, add new factors, then continue.
+- **Same-backend session recovery**: After a browser refresh, the frontend tries to reconnect to the latest backend in-memory session; if the backend process is still running, the completed report can still be collected.
+- **Live working indicator**: While a new reply is being generated, a breathing marker appears after the latest content so the user can see that the system is still active.
+- **Collapsible reading**: Every A/B/C reply has its own collapse button, Final Conclusion can be collapsed independently, and all non-final replies can be collapsed with one control.
+- **Optional reply length limit**: `Reply word limit except final` is off by default; when enabled, it constrains each complete non-final A/B/C reply. Final Conclusion is not limited.
 - **Rendered final Markdown**: Headings, lists, tables, links, and source references render in-app.
 - **Continuation and fallback**: If the final report is truncated, it continues automatically; if both model calls fail, the app renders an explicitly labeled local fallback Markdown.
-- **Markdown export**: Export the final report, evidence URLs, source ownership, and full transcript.
+- **Robust Markdown export**: Export the final report, evidence URLs, source ownership, and full transcript. If the backend export endpoint is unavailable, the frontend generates Markdown from the current browser snapshot.
 
 ## Workflow
 
@@ -119,17 +141,19 @@ API keys are stored in the current browser's `localStorage` and sent only to the
 | Command | Description |
 | --- | --- |
 | `npm run dev` | Start backend and Vite frontend together, then open `/debate.html` |
+| `npm run dev:awake` | On macOS, start dev services and prevent system sleep for long debates |
 | `npm run dev:server` | Start only the Express backend TypeScript watcher |
 | `npm run dev:web` | Start only the Vite frontend; `/api` proxies to the backend |
 | `npm run check` | TypeScript type check |
 | `npm run test` | Run Vitest unit tests |
 | `npm run build` | Build frontend production assets and run type checks |
 | `npm start` | Start the production Express backend and serve `dist/` |
+| `npm run start:awake` | On macOS, start production mode and prevent system sleep |
 | `npm run preview` | Preview the Vite static build only; it does not run the backend agent API |
 
 ## Deployment
 
-The current version is no longer a static-only frontend. Production requires a long-running Node.js service. After build, the Express backend serves `dist/` and provides `/api/debates` plus the SSE event stream.
+Production requires a long-running Node.js service. After build, the Express backend serves `dist/` and provides `/api/debates` plus the SSE event stream.
 
 ```bash
 npm install
@@ -185,6 +209,8 @@ This means:
 
 - Do not hard-code API keys in source code.
 - The backend does not persist API keys, but on a public deployment user keys are still sent to the server you operate. Use HTTPS and make sure users trust that deployment.
+- Sessions live in backend process memory, not in a database. A browser refresh can recover a session in the same backend process; a backend restart cannot recover a running debate.
+- If the computer enters system sleep, the Node process and provider requests may be suspended. For long runs on macOS, use `npm run dev:awake` or `npm run start:awake`.
 - There is no user system, database, or tenant isolation yet. For long-running public use, add authentication, rate limits, redacted logs, cost controls, and session cleanup.
 - Search APIs may rate-limit or run out of quota. The current implementation searches serially by speaking turn and degrades individual search failures, but exhausted provider quota will still surface as warnings.
 
@@ -217,6 +243,7 @@ This means:
 | API | Purpose |
 | --- | --- |
 | `POST /api/debates` | Create and start a debate session |
+| `GET /api/debates/:id` | Fetch the current session snapshot for refresh recovery |
 | `GET /api/debates/:id/events` | Stream status, messages, evidence, final report, and errors over SSE |
 | `POST /api/debates/:id/pause` | Request pause after the current API call finishes |
 | `POST /api/debates/:id/resume` | Submit user-added factors and continue |
@@ -255,6 +282,8 @@ The core design goal is to stay explainable, traceable, and exportable:
 - A/B speeches must cite provided source IDs to reduce hallucinated references.
 - Financial and market data should come from structured evidence; plain web pages are background only.
 - The moderator final report is displayed only as rendered Markdown while the raw Markdown remains exportable.
+- `Reply word limit except final` is optional and off by default; when enabled it uses prompts, audit, compression, and local fallback clamping to constrain non-final replies.
+- Frontend export prefers backend Markdown, and falls back to Markdown generated from the current browser snapshot when the backend endpoint is unavailable.
 - `?mock=1` can run 1 to 10 regression rounds without real API keys.
 
 ## License

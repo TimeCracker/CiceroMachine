@@ -18,6 +18,8 @@ export interface Config {
   apiKey: string;
   model: string;
   maxTokens: number;
+  responseWordLimitEnabled: boolean;
+  responseWordLimit: number;
   temperature: number;
   timeoutSeconds: number;
   deepSeekFinalThinking: boolean;
@@ -88,7 +90,7 @@ export interface DebateRecord {
   currentRound: number;
   startedAt: string;
   endedAt: string;
-  configSummary: Pick<Config, "provider" | "apiFormat" | "baseURL" | "model" | "searchProvider" | "searchCount" | "freshness" | "queriesPerAgent">;
+  configSummary: Pick<Config, "provider" | "apiFormat" | "baseURL" | "model" | "searchProvider" | "searchCount" | "freshness" | "queriesPerAgent" | "responseWordLimitEnabled" | "responseWordLimit">;
   messages: DebateMessage[];
   evidence: EvidenceItem[];
   guidance: UserGuidance[];
@@ -123,6 +125,9 @@ export type DebateSessionEvent =
 export interface DebateSessionSnapshot {
   id: string;
   debate: DebateRecord;
+  running?: boolean;
+  paused?: boolean;
+  pauseRequested?: boolean;
 }
 
 export interface AppState {
@@ -146,6 +151,8 @@ export interface Elements {
   deepSeekOptions: HTMLElement;
   deepSeekFinalThinkingInput: HTMLInputElement;
   maxTokensInput: HTMLInputElement;
+  responseWordLimitEnabledInput: HTMLInputElement;
+  responseWordLimitInput: HTMLInputElement;
   searchProviderSelect: HTMLSelectElement;
   searchApiKeyInput: HTMLInputElement;
   searchCountInput: HTMLInputElement;
@@ -168,8 +175,10 @@ export interface Elements {
   statusText: HTMLElement;
   progressText: HTMLElement;
   progressBar: HTMLElement;
+  collapseRepliesBtn: HTMLButtonElement;
   messages: HTMLElement;
   finalReportSection: HTMLElement;
+  finalReportToggleBtn: HTMLButtonElement;
   finalReportPreview: HTMLElement;
   evidenceList: HTMLElement;
   sourceDock: HTMLElement;

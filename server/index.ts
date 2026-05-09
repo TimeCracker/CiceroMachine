@@ -38,6 +38,12 @@ app.get("/api/debates/:id/events", (req, res) => {
   session.addClient(res);
 });
 
+app.get("/api/debates/:id", (req, res) => {
+  const session = getSession(req.params.id, res);
+  if (!session) return;
+  res.json(session.snapshot());
+});
+
 app.post("/api/debates/:id/pause", (req, res) => {
   const session = getSession(req.params.id, res);
   if (!session) return;
@@ -62,8 +68,9 @@ app.post("/api/debates/:id/stop", (req, res) => {
 app.get("/api/debates/:id/export", (req, res) => {
   const session = getSession(req.params.id, res);
   if (!session) return;
+  const filename = session.exportFileName();
   res.setHeader("Content-Type", "text/markdown; charset=utf-8");
-  res.setHeader("Content-Disposition", `attachment; filename="${session.exportFileName()}"`);
+  res.setHeader("Content-Disposition", contentDispositionAttachment(filename));
   res.send(session.exportMarkdown());
 });
 
@@ -98,6 +105,8 @@ function normalizeConfig(input: Partial<Config> | undefined): Config {
     baseURL: String(input?.baseURL || DEFAULT_CONFIG.baseURL),
     topic: String(input?.topic || "").trim(),
     maxTokens: clampNumber(input?.maxTokens, 256, 16000, DEFAULT_CONFIG.maxTokens),
+    responseWordLimitEnabled: Boolean(input?.responseWordLimitEnabled ?? DEFAULT_CONFIG.responseWordLimitEnabled),
+    responseWordLimit: clampNumber(input?.responseWordLimit, 120, 2000, DEFAULT_CONFIG.responseWordLimit),
     temperature: clampNumber(input?.temperature, 0, 2, DEFAULT_CONFIG.temperature),
     timeoutSeconds: clampNumber(input?.timeoutSeconds, 15, 180, DEFAULT_CONFIG.timeoutSeconds),
     searchCount: clampNumber(input?.searchCount, 1, 10, DEFAULT_CONFIG.searchCount),
@@ -110,4 +119,15 @@ function clampNumber(value: unknown, min: number, max: number, fallback: number)
   const number = Number(value);
   if (!Number.isFinite(number)) return fallback;
   return Math.min(max, Math.max(min, number));
+}
+
+function contentDispositionAttachment(filename: string) {
+  const fallback = String(filename || "debate.md")
+    .replace(/[^\x20-\x7E]+/g, "_")
+    .replace(/["\\]/g, "_")
+    .slice(0, 120) || "debate.md";
+  const encoded = encodeURIComponent(filename || "debate.md")
+    .replace(/['()]/g, (char) => `%${char.charCodeAt(0).toString(16).toUpperCase()}`)
+    .replace(/\*/g, "%2A");
+  return `attachment; filename="${fallback}"; filename*=UTF-8''${encoded}`;
 }

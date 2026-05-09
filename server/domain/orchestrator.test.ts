@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_CONFIG } from "../../src/config";
-import { DebateSession } from "./orchestrator";
+import { DebateSession, extractModeratorGuidance } from "./orchestrator";
 
 describe("DebateSession", () => {
   it("runs a mock debate with isolated A/B/C agent runtime state", async () => {
@@ -20,7 +20,8 @@ describe("DebateSession", () => {
     expect(snapshot.debate.messages.some((message) => message.agent === "A")).toBe(true);
     expect(snapshot.debate.messages.some((message) => message.agent === "B")).toBe(true);
     expect(snapshot.debate.messages.some((message) => message.agent === "C")).toBe(true);
-    expect(snapshot.debate.finalReport).toContain("Core Conclusion");
+    expect(snapshot.debate.finalReport).toContain("Factual Consensus");
+    expect(snapshot.debate.finalReport).toContain("Conditional Conclusions");
     expect(snapshot.debate.agentStates?.A?.role).toBe("pro");
     expect(snapshot.debate.agentStates?.B?.role).toBe("con");
     expect(snapshot.debate.agentStates?.C?.role).toBe("moderator");
@@ -65,10 +66,26 @@ describe("DebateSession", () => {
     await session.start();
     const markdown = session.exportMarkdown();
 
-    expect(session.snapshot().debate.finalReport).toContain("## 核心结论");
+    expect(session.snapshot().debate.finalReport).toContain("## 1. 事实共识");
     expect(markdown).toContain("# 辩论研究报告");
     expect(markdown).toContain("## 主持人最终结论");
     expect(markdown).toContain("## 证据表");
     expect(markdown).toContain("## 完整辩论记录");
+  });
+
+  it("extracts structured moderator blind spot and follow-up guidance", () => {
+    const guidance = extractModeratorGuidance([
+      "(a) Core disagreement: benefits versus risks.",
+      "",
+      "(b) Logic audit: no clear fallacy.",
+      "",
+      "(c) Blind spot: Which variables are measurable rather than judgment calls?",
+      "",
+      "(d) Follow-up angle: Test B, C, and R in the next round."
+    ].join("\n"));
+
+    expect(guidance).toContain("Which variables are measurable");
+    expect(guidance).toContain("Follow-up angle");
+    expect(guidance).not.toContain("Core disagreement");
   });
 });

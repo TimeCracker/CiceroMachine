@@ -25,7 +25,7 @@
 
     <div class="layout">
       <div>
-        <details class="section" open>
+        <details class="section">
           <summary>
             <span>Configuration</span>
             <span class="hint">Saved in this browser</span>
@@ -146,6 +146,14 @@
                 <label for="timeoutInput">Request timeout in seconds</label>
                 <input id="timeoutInput" type="number" min="15" max="180" step="5">
               </div>
+              <div>
+                <label for="responseWordLimitInput">Reply word limit except final</label>
+                <div class="checkline compact-check">
+                  <input id="responseWordLimitEnabledInput" type="checkbox">
+                  <span>Enable reply limit</span>
+                </div>
+                <input id="responseWordLimitInput" type="number" min="120" max="2000" step="20">
+              </div>
             </div>
             <div class="controls">
               <button id="startBtn" class="primary" type="button" disabled><i data-lucide="play"></i><span>Start debate</span></button>
@@ -162,7 +170,10 @@
         </section>
 
         <section class="section">
-          <h2 class="section-title">Debate Process</h2>
+          <div class="section-title-row">
+            <h2 class="section-title">Debate Process</h2>
+            <button id="collapseRepliesBtn" class="ghost compact" type="button" disabled><i data-lucide="chevrons-up"></i><span>Collapse replies</span></button>
+          </div>
           <div class="section-body">
             <div class="status-line">
               <div id="statusText" class="status-text">Waiting to start.</div>
@@ -178,7 +189,10 @@
         </section>
 
         <section id="finalReportSection" class="section hidden">
-          <h2 class="section-title">Final Conclusion</h2>
+          <div class="section-title-row">
+            <h2 class="section-title">Final Conclusion</h2>
+            <button id="finalReportToggleBtn" class="ghost compact" type="button"><i data-lucide="chevron-up"></i><span>Collapse</span></button>
+          </div>
           <div class="section-body">
             <div id="finalReportPreview" class="markdown-preview"></div>
           </div>

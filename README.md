@@ -13,8 +13,8 @@
   </p>
 
   <p>
-    <strong>后端三独立 Agent 辩论工作台</strong><br />
-    让正反双方按发言顺序联网检索和辩论，再由主持人汇总证据、公式与最终结论。
+    <strong>证据驱动的三 Agent 对抗-收束辩论工作台</strong><br />
+    对抗是手段，用来逼出信息；收束是目的，用来逼近真理。
   </p>
 
   <p>
@@ -29,15 +29,29 @@
 
 ## 这是什么？
 
-Cicero Machine 是一个“后端 Agent 服务 + 前端工作台”的研究与辩论工具。你输入辩题和 API Key 后，后端会创建一次内存中的辩论会话，并运行三个独立的 AgentRuntime：
+Cicero Machine 是一个“后端 Agent 服务 + 前端工作台”的研究与辩论工具。你输入辩题和 API Key 后，后端会创建一次内存中的辩论会话，并运行三个独立的 AgentRuntime。它的核心设计哲学是：**对抗要足够长，才能逼出信息；收束要足够精确，才能逼近真理。**
+
+前端工作台负责配置、暂停/继续、SSE 实时渲染、source 跳转、回复折叠、最终结论预览和 Markdown 导出；后端负责三 agent 调度、联网检索、证据登记、审计、收束和报告生成。
 
 | Agent | 角色 | 独立状态 | 做什么 |
 | --- | --- | --- | --- |
-| A | 正方 | 独立 history、memory、source pool、search log | 轮到自己发言前检索支持性证据，构造正方论点，回应反方挑战 |
-| B | 反方 | 独立 history、memory、source pool、search log | 在看到 A 当前轮发言后检索反例和风险证据，攻击正方假设 |
-| C | 主持人 | 独立 memory、guidance、audit log | 轮间点评、提出下一步追问，并在最后生成 Markdown 研究报告 |
+| A | 正方 | 独立 history、memory、source pool、search log | 轮到自己发言前检索支持性证据，构造正方论点，回应反方挑战，并承认对方无法完全驳倒的部分 |
+| B | 反方 | 独立 history、memory、source pool、search log | 在看到 A 当前轮发言后检索反例和风险证据，攻击正方假设，并指出自身立场的适用边界 |
+| C | 主持人 | 独立 memory、guidance、audit log | 做轮间逻辑审计、识别双方盲区、提出下一轮追问，并在最后生成结构化 Markdown 研究报告 |
 
 A/B/C 不共享私有对话历史，只通过后端 orchestrator 交换公开发言、全局 source ID、用户补充因素和主持人 guidance。一个 DeepSeek 或其他 LLM API Key 可以同时供三名 agent 使用。
+
+## 辩论机制
+
+辩论分为三个阶段：
+
+| 阶段 | 目的 | 规则 |
+| --- | --- | --- |
+| 开场轮 | 建立双方初始论证框架 | A/B 分别检索证据、提出核心变量、公式和初始边界，并给出必要让步 |
+| 对抗轮 | 拉长冲突，暴露信息差和推理漏洞 | 每次发言先 steel-man 对方最强论点，再反驳；每轮必须给出一个具体让步；主持人做核心分歧、逻辑谬误、共同盲区和下一轮方向审计 |
+| 收束轮 | 精确划定真理边界 | A/B 停止单纯进攻，回答“在什么条件下对方是对的”，给出“我的立场在什么条件下成立”，并指出决定胜负的关键未解事实 |
+
+主持人最终报告使用固定结构：事实共识、事实分歧、价值与立场分歧、证据与公式表、条件性结论、未解决问题、平衡评估与最终结论、方法论限制。所有事实判断都必须引用 `[S1]`、`[S2]` 这样的 source ID。
 
 它适合用来做：
 
@@ -50,15 +64,23 @@ A/B/C 不共享私有对话历史，只通过后端 orchestrator 交换公开发
 
 - **三套独立 AgentRuntime**：A/B/C 在后端分别维护自己的 history、memory、证据池、搜索记录和审计状态。
 - **按发言顺序串行检索**：每轮 A 先查再讲，B 看到 A 当前轮发言后再查再反驳，降低搜索 API 并发触发限流的概率。
+- **Steel-man + 强制让步**：A/B 必须先复述对方最强论点，再提出反驳；每次发言都要承认一个无法完全驳倒的对方观点。
+- **主持人逻辑审计**：C 的轮间点评固定包含核心分歧、逻辑审计、共同盲区和 follow-up angle，并把盲区与追问注入下一轮。
+- **最后一轮条件化收束**：A/B 最终必须说明自己和对方分别在什么条件下成立，避免把复杂问题压成绝对输赢。
 - **联网检索证据**：支持博查 API、Tavily API、OpenAI/Anthropic 原生搜索和混合模式。
 - **DeepSeek 适配**：默认支持 DeepSeek OpenAI-compatible Chat Completions，可复用同一个 API Key。
 - **全局来源编号**：后端 `EvidenceRegistry` 统一分配 `S1/S2/S3...`，URL 全局去重，并记录每个 source 由哪个 agent、哪一轮、哪个 query 发现或引用。
 - **来源可点击**：正文里的 `[S1]`、`[S2]` 会渲染成可点击来源链接。
 - **主持人引导进入下一轮**：C 的轮间追问会被广播给 A/B，并注入下一轮检索和发言任务。
+- **搜索规划降级**：LLM 生成 search query 失败时会使用本地 fallback queries 继续辩论，避免单次网络波动中断整场会话。
 - **暂停继续**：用户可以暂停辩论，补充新的考虑因素，再让 agent 继续。
+- **同一后端会话恢复**：刷新浏览器后，前端会尝试重新连接最近一次后端内存 session；如果后端进程仍在，完成后的报告仍可收集。
+- **生成中状态提示**：新回复生成时，最新内容后会显示呼吸动态标记，让用户确认系统仍在工作。
+- **折叠阅读**：每条 A/B/C 回复都有独立折叠按钮，Final Conclusion 也可单独折叠；还可以一键折叠除最终结论外的全部回复。
+- **可选回复长度限制**：`Reply word limit except final` 默认关闭；开启后才约束 A/B/C 的非最终单次完整回复，Final Conclusion 不受限制。
 - **最终结论 Markdown 渲染**：标题、列表、表格、链接、source 引用都能在线预览。
 - **截断自动续写和失败 fallback**：最终总结如果被截断会自动续写；两次模型调用失败时会生成明确标注的本地 fallback Markdown。
-- **导出 Markdown**：辩论完成后可导出最终报告、证据 URL、来源归属和完整辩论记录。
+- **稳健导出 Markdown**：辩论完成后可导出最终报告、证据 URL、来源归属和完整辩论记录；如果后端导出接口不可用，前端会使用浏览器中的当前辩论快照生成 Markdown。
 
 ## Demo 截图
 
@@ -140,17 +162,19 @@ API Key 保存在当前浏览器的 `localStorage`，开始辩论时只发送给
 | 命令 | 说明 |
 | --- | --- |
 | `npm run dev` | 同时启动后端和 Vite 前端，并打开 `/debate.html` |
+| `npm run dev:awake` | macOS 下启动开发服务并阻止系统休眠，适合长时间辩论 |
 | `npm run dev:server` | 只启动 Express 后端 TypeScript watcher |
 | `npm run dev:web` | 只启动 Vite 前端，`/api` 代理到后端 |
 | `npm run check` | TypeScript 类型检查 |
 | `npm run test` | 运行 Vitest 单元测试 |
 | `npm run build` | 构建前端生产产物并做类型检查 |
 | `npm start` | 生产模式启动 Express 后端，并托管 `dist/` |
+| `npm run start:awake` | macOS 下生产模式启动并阻止系统休眠 |
 | `npm run preview` | 仅预览 Vite 静态构建，不运行后端 agent API |
 
 ## 部署
 
-当前版本不再是纯静态前端，生产部署需要一个能长期运行 Node.js 的服务。构建后由 Express 后端托管 `dist/`，并提供 `/api/debates` 与 SSE 事件流。
+生产部署需要一个能长期运行 Node.js 的服务。构建后由 Express 后端托管 `dist/`，并提供 `/api/debates` 与 SSE 事件流。
 
 ```bash
 npm install
@@ -208,6 +232,8 @@ sequenceDiagram
 
 - 不要在代码中硬编码 API Key。
 - 后端不持久化 API Key，但公开部署时用户的 Key 会传到你部署的服务器，因此必须使用 HTTPS，并确保用户信任该服务。
+- Session 保存在后端进程内存中，不写入数据库。刷新浏览器可恢复同一后端进程里的 session；后端重启后不能恢复正在运行的辩论。
+- 如果电脑进入系统休眠，Node 进程和网络请求也可能被挂起；长时间运行建议使用 `npm run dev:awake` 或 `npm run start:awake`。
 - 当前没有用户系统、数据库和租户隔离；如果要公开给多人长期使用，需要补充认证、限流、日志脱敏、费用控制和 session 清理策略。
 - 搜索 API 可能有频率限制。当前实现已按发言顺序串行检索，并对单次搜索失败做降级，但账号额度耗尽仍会返回 provider warning。
 
@@ -240,6 +266,7 @@ sequenceDiagram
 | API | 用途 |
 | --- | --- |
 | `POST /api/debates` | 创建并启动一次辩论 session |
+| `GET /api/debates/:id` | 获取当前 session 快照，用于刷新后恢复 |
 | `GET /api/debates/:id/events` | 通过 SSE 推送状态、消息、证据、最终报告和错误 |
 | `POST /api/debates/:id/pause` | 请求在当前 API 调用结束后暂停 |
 | `POST /api/debates/:id/resume` | 提交用户补充因素并继续 |
@@ -278,6 +305,8 @@ SSE event 类型包括 `status`、`progress`、`message`、`evidence`、`warning
 - A/B 的发言必须引用已提供的 source ID，减少模型伪造来源。
 - 财务/行情数据优先使用结构化证据，普通网页搜索只能作为背景材料。
 - 主持人最终报告只以渲染后的 Markdown 形式展示，同时保留原始 Markdown 供导出。
+- `Reply word limit except final` 是可选约束，默认关闭；开启后会通过 prompt、审计、压缩和本地兜底裁剪共同约束非最终回复。
+- 前端导出优先使用后端 Markdown，后端不可用时使用浏览器内当前快照生成 Markdown。
 - `?mock=1` 可在没有真实 API Key 的情况下跑通 1 到 10 轮回归测试。
 
 ## License

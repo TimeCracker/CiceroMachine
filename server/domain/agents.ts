@@ -117,18 +117,22 @@ export class AgentRuntime {
     if (this.agent === "C") throw new Error("Moderator cannot use debater speak().");
     const side = this.agent === "A" ? "pro" : "con";
     const opponent = this.agent === "A" ? "con" : "pro";
+    const totalRounds = Math.max(1, Number(this.config.rounds) || 1);
+    const phase = round === 1 ? "opening" : (round === totalRounds && totalRounds > 1 ? "convergence" : "clash");
     const systemPrompt = buildDebaterSystemPrompt(this.agent, shared.topic);
     const evidenceBlock = formatEvidenceForPrompt(evidence.length ? evidence : shared.evidence.slice(-10));
+    const replyLimitInstruction = formatReplyLimitForPrompt(this.replyWordLimit());
     const financeInstruction = detectFinancialTopic(shared.topic)
       ? "Strict financial-data rule: stock price, market cap, P/E, EPS, revenue, profit, and similar figures may only come from structured market evidence whose provider is bocha-ai-search-card or yahoo-finance-chart. State currency and date/retrieval time. Ordinary web search results may only be background material. If no structured market evidence exists, say current market evidence is insufficient and do not cite stale stock prices from webpage snippets."
       : "";
     const rigorInstruction = [
       topicLanguageInstruction(shared.topic),
+      replyLimitInstruction,
       "Coverage requirement: cover at least 4 factor categories, choosing from factual data, costs and benefits, risks/failure modes, stakeholders, time horizon, executability, regulation/ethics, and counterexamples/boundary conditions.",
       "Integrity requirement: cite a source ID for every key factual claim; do not overstate evidence, turn correlation into causation, or selectively ignore evidence that hurts your side.",
       "Self-restraint: if the evidence only supports a weak conclusion, use conditional language such as 'possibly', 'under these conditions', or 'the evidence is limited'. Do not invent facts to win the debate."
     ].join("\n");
-    const userPrompt = round === 1
+    const userPrompt = phase === "opening"
       ? [
           `Give your opening argument for round ${round}.`,
           `Your stance: ${side}.`,
@@ -138,6 +142,32 @@ export class AgentRuntime {
           financeInstruction,
           rigorInstruction,
           "Requirements: cite at least 2 source IDs; if quantitative relationships are involved, write variables or formulas."
+        ].join("\n\n")
+      : phase === "convergence"
+      ? [
+          `Latest ${opponent} speech:\n${opponentSpeech}`,
+          "FINAL ROUND - CONVERGENCE TASK:",
+          "",
+          "This is the last round. Your task changes from attacking to boundary-mapping.",
+          "",
+          "1. Briefly respond to the opponent's latest argument (2-3 sentences max).",
+          "",
+          "2. Main task - answer this question in detail:",
+          "\"Under what specific conditions, assumptions, or contexts would the OPPONENT's position be correct or preferable?\"",
+          "Be precise about the conditions. Use evidence from the debate.",
+          "",
+          "3. State the refined version of YOUR position:",
+          "\"My position holds when...\" (specify the conditions).",
+          "",
+          "4. Identify the single most important unresolved factual question that would determine which side is ultimately right.",
+          "",
+          "This is not a retreat - it is mapping the exact boundary of your position. The goal is precision, not victory.",
+          formatUserGuidanceForPrompt(shared.guidance),
+          formatModeratorGuidanceForPrompt(shared.moderatorGuidance),
+          `Available evidence:\n${evidenceBlock}`,
+          financeInstruction,
+          rigorInstruction,
+          "Cite at least 2 source IDs; if quantitative relationships are involved, write variables or formulas."
         ].join("\n\n")
       : [
           `Latest ${opponent} speech:\n${opponentSpeech}`,
@@ -150,13 +180,13 @@ export class AgentRuntime {
         ].join("\n\n");
 
     this.history.push({ role: "user", content: userPrompt });
-    const content = await this.tools.llm.call(systemPrompt, this.history, {
+    const content = await this.callLLMTextWithRetry(systemPrompt, this.history, {
       maxTokens: this.config.maxTokens,
       temperature: this.config.temperature,
       deepSeekThinking: false,
       debugLabel: `${this.label} speech`
     });
-    const revised = await this.reviseIfNeeded(round, content, evidence, systemPrompt, financeInstruction, shared);
+    const revised = await this.reviseIfNeeded(round, totalRounds, content, evidence, systemPrompt, financeInstruction, shared);
     this.history.push({ role: "assistant", content: revised });
     return revised;
   }
@@ -165,14 +195,22 @@ export class AgentRuntime {
     if (this.agent !== "C") throw new Error("Only moderator can moderate.");
     const systemPrompt = buildModeratorSystemPrompt(shared.topic);
     if (type !== "final") {
-      const content = await this.tools.llm.call(systemPrompt, [{ role: "user", content: buildModeratorContext(round, type, 0, shared) }], {
+      const content = await this.callLLMTextWithRetry(systemPrompt, [{ role: "user", content: buildModeratorContext(round, type, 0, shared, this.replyWordLimit()) }], {
         maxTokens: this.config.maxTokens,
         temperature: 0.55,
         deepSeekThinking: false,
         debugLabel: "Moderator inter-round commentary"
       });
-      this.memory.push(truncate(content, 1200));
-      return content;
+      const limited = await this.compressReplyIfOverLimit(
+        round,
+        content,
+        systemPrompt,
+        shared.topic,
+        "Moderator inter-round commentary length compression",
+        "Preserve the four required sections (a)-(d), the central audit judgment, the follow-up question, and any source IDs. Compress secondary explanation."
+      );
+      this.memory.push(truncate(limited, 1200));
+      return limited;
     }
     try {
       return await this.callFinalModeratorReport(systemPrompt, round, 0, shared, {
@@ -224,14 +262,19 @@ export class AgentRuntime {
       opponentSpeech ? `Latest opposing speech: ${opponentSpeech}` : "The opposing side has not spoken yet.",
       `Generate ${this.config.queriesPerAgent} search queries.`
     ].join("\n\n");
-    const text = await this.tools.llm.call(systemPrompt, [{ role: "user", content: userPrompt }], {
-      maxTokens: 500,
-      temperature: 0.2,
-      deepSeekThinking: false,
-      debugLabel: `${this.label} search planning`
-    });
-    const parsed = parseJsonArray(text).filter((item) => typeof item === "string").map((item) => item.trim()).filter(Boolean);
-    if (parsed.length) return uniqueStrings(parsed).slice(0, this.config.queriesPerAgent);
+    try {
+      const text = await this.tools.llm.call(systemPrompt, [{ role: "user", content: userPrompt }], {
+        maxTokens: 500,
+        temperature: 0.2,
+        deepSeekThinking: false,
+        debugLabel: `${this.label} search planning`
+      });
+      const parsed = parseJsonArray(text).filter((item) => typeof item === "string").map((item) => item.trim()).filter(Boolean);
+      if (parsed.length) return uniqueStrings(parsed).slice(0, this.config.queriesPerAgent);
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      this.tools.warn(`${this.label} search planning failed; using local fallback queries: ${formatErrorMessage(error)}`);
+    }
     return this.fallbackQueries(shared.topic);
   }
 
@@ -270,8 +313,9 @@ export class AgentRuntime {
     ].slice(0, this.config.queriesPerAgent);
   }
 
-  private async reviseIfNeeded(round: number, content: string, evidence: EvidenceItem[], systemPrompt: string, financeInstruction: string, shared: SharedDebateContext) {
-    const issues = auditSpeech(content, evidence, shared);
+  private async reviseIfNeeded(round: number, totalRounds: number, content: string, evidence: EvidenceItem[], systemPrompt: string, financeInstruction: string, shared: SharedDebateContext) {
+    const replyLimit = this.replyWordLimit();
+    const issues = auditSpeech(content, evidence, shared, round, totalRounds, replyLimit);
     if (!issues.length) return content;
     this.auditLog.push({
       round,
@@ -279,9 +323,13 @@ export class AgentRuntime {
       createdAt: new Date().toISOString()
     });
     if (this.mockMode) {
-      return `${content}\n\nSelf-check addendum: covered evidence, risks, costs/benefits, and boundary conditions; unverified numbers are not used as conclusions.`;
+      const addendum = issues.some((issue) => !issue.startsWith("Reply too long:"))
+        ? `${content}\n\nSelf-check addendum: covered evidence, risks, costs/benefits, and boundary conditions; unverified numbers are not used as conclusions.`
+        : content;
+      return hardClampReplyToLimit(addendum, replyLimit);
     }
     const evidenceBlock = formatEvidenceForPrompt(evidence);
+    const replyLimitInstruction = formatReplyLimitForPrompt(replyLimit);
     const revisionPrompt = [
       "Revise your previous speech to fix the following integrity and coverage issues:",
       issues.map((issue, index) => `${index + 1}. ${issue}`).join("\n"),
@@ -289,18 +337,81 @@ export class AgentRuntime {
       formatModeratorGuidanceForPrompt(shared.moderatorGuidance),
       "",
       topicLanguageInstruction(shared.topic),
+      replyLimitInstruction,
       "",
       `Available evidence:\n${evidenceBlock}`,
       financeInstruction,
-      "Revision requirements: keep your stance, but do not fabricate. Cover at least 4 factor categories. Cite a source ID for every key factual claim. If evidence is insufficient, say so clearly. Output only the revised speech."
+      "Revision requirements: keep your stance, but do not fabricate. Cover at least 4 factor categories. Cite a source ID for every key factual claim. If evidence is insufficient, say so clearly. The whole revised speech must obey the configured reply limit. Output only the revised speech."
     ].join("\n\n");
-    const revised = await this.tools.llm.call(systemPrompt, [...this.history, { role: "assistant", content }, { role: "user", content: revisionPrompt }], {
+    const revised = await this.callLLMTextWithRetry(systemPrompt, [...this.history, { role: "assistant", content }, { role: "user", content: revisionPrompt }], {
       maxTokens: this.config.maxTokens,
       temperature: Math.min(0.4, this.config.temperature),
       deepSeekThinking: false,
       debugLabel: `${this.label} revision`
     });
-    return revised || content;
+    return this.compressReplyIfOverLimit(
+      round,
+      revised || content,
+      systemPrompt,
+      shared.topic,
+      `${this.label} length compression`,
+      "Preserve stance, valid source IDs, formulas, the moderator guidance response, the steel-man if required, and the concession. Compress examples, transitions, and secondary explanation."
+    );
+  }
+
+  private async callLLMTextWithRetry(systemPrompt: string, messages: Array<{ role: string; content: string }>, options: any) {
+    try {
+      return await this.tools.llm.call(systemPrompt, messages, options);
+    } catch (error) {
+      if (isAbortError(error) || !isRetryableFinalSummaryError(error, formatErrorMessage)) throw error;
+      this.tools.warn(`${options.debugLabel || this.label} failed; retrying once: ${formatErrorMessage(error)}`);
+      return this.tools.llm.call(systemPrompt, messages, {
+        ...options,
+        deepSeekThinking: false,
+        debugLabel: `${options.debugLabel || this.label} retry`
+      });
+    }
+  }
+
+  private async compressReplyIfOverLimit(round: number, content: string, systemPrompt: string, topic: string, debugLabel: string, preserveInstruction: string) {
+    const replyLimit = this.replyWordLimit();
+    const issue = replyLimitIssue(content, replyLimit);
+    if (!issue) return content;
+    this.auditLog.push({
+      round,
+      note: issue,
+      createdAt: new Date().toISOString()
+    });
+    if (this.mockMode) return hardClampReplyToLimit(content, replyLimit);
+    const limit = normalizedReplyLimit(replyLimit);
+    const compressionPrompt = [
+      `Compress the previous non-final agent reply to fit the configured limit: maximum ${limit} words/CJK characters for the entire response.`,
+      issue,
+      topicLanguageInstruction(topic),
+      preserveInstruction,
+      "Do not add meta commentary. Output only the compressed reply.",
+      "",
+      `Previous reply:\n${content}`
+    ].join("\n\n");
+    try {
+      const compressed = await this.callLLMTextWithRetry(systemPrompt, [{ role: "user", content: compressionPrompt }], {
+        maxTokens: Math.max(256, Math.min(this.config.maxTokens, Math.ceil(limit * 3))),
+        temperature: 0.2,
+        deepSeekThinking: false,
+        debugLabel
+      });
+      return replyLimitIssue(compressed, replyLimit)
+        ? hardClampReplyToLimit(compressed || content, replyLimit)
+        : compressed || hardClampReplyToLimit(content, replyLimit);
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      this.tools.warn(`${debugLabel} failed; applying local length clamp: ${formatErrorMessage(error)}`);
+      return hardClampReplyToLimit(content, replyLimit);
+    }
+  }
+
+  private replyWordLimit() {
+    return this.config.responseWordLimitEnabled ? this.config.responseWordLimit : undefined;
   }
 
   private async callFinalModeratorReport(systemPrompt: string, round: number, compactLevel: number, shared: SharedDebateContext, options: any) {
@@ -321,7 +432,7 @@ export class AgentRuntime {
           content: [
             "The previous final summary appears truncated. Continue from the cutoff point without repeating existing content.",
             topicLanguageInstruction(shared.topic),
-            "Complete the Markdown tables, formulas/derivations, root disagreements, balanced assessment, final conclusion, and limitations.",
+            "Complete the required Markdown sections: factual consensus, factual disputes, value and stance disputes, evidence and formula table, conditional conclusions, unresolved questions, balanced assessment and final conclusion, and methodology limitations.",
             "If the previous text ended inside a table, continue the remaining cells and later rows directly. Do not restart the whole report."
           ].join("\n")
         }
@@ -354,15 +465,18 @@ export function buildDebaterSystemPrompt(agent: AgentId, topic: string) {
     "Rules:",
     "1. Each speech must make clear claims supported by evidence, data, logic, cases, or formulas.",
     `2. From round 2 onward, rebut the ${opponent}'s specific prior claims before strengthening your own stance.`,
-    "3. Only cite source IDs provided in the user message, such as [S1]. Do not fabricate sources.",
-    "4. For quantitative relationships, write formulas or variable definitions, such as ROI=(benefit-cost)/cost.",
-    "5. Financial and stock-price data may only come from structured market evidence, preferably providers bocha-ai-search-card or yahoo-finance-chart. Ordinary web results may only be background material and must not be treated as current stock prices.",
-    "6. Do not report real-time stock price, market cap, P/E, EPS, revenue, profit, or similar figures from model memory. If no reliable current source exists, explicitly say the evidence is insufficient.",
-    "7. Coverage: discuss evidence supporting your side, counterexamples or boundary conditions against your side, costs and benefits, risks, and time horizon. Do not focus on only one factor.",
-    "8. Integrity: do not fabricate data, misquote sources, present old data as current, turn webpage summaries into official facts, or state correlation as causation.",
-    "9. If the user message contains moderator follow-up/guidance, answer it in a separate paragraph and explain whether new evidence supports your stance.",
-    "10. Be sharp but rational. No personal attacks.",
-    `11. ${topicLanguageInstruction(topic)} Target 260-420 English-equivalent words, or a comparable length in the target language.`
+    "2a. Steel-man requirement (from round 2 onward): before rebutting, restate the opponent's single strongest argument in 1-2 sentences. Start with \"The opponent's strongest point is...\" or the equivalent phrase in the target language, such as \"对方最有力的论点是……\". Do not weaken, caricature, or omit qualifications from the original.",
+    "2b. Concession requirement: end every speech with a concession paragraph. Identify one specific opposing argument you cannot fully refute, or one dimension where the opponent has merit. Start with \"I concede that...\" or the equivalent phrase in the target language, such as \"我承认……\". Answering \"none\" is not acceptable; if needed, concede the narrowest possible sub-point.",
+    "5. Only cite source IDs provided in the user message, such as [S1]. Do not fabricate sources.",
+    "6. For quantitative relationships, write formulas or variable definitions, such as ROI=(benefit-cost)/cost.",
+    "7. Financial and stock-price data may only come from structured market evidence, preferably providers bocha-ai-search-card or yahoo-finance-chart. Ordinary web results may only be background material and must not be treated as current stock prices.",
+    "8. Do not report real-time stock price, market cap, P/E, EPS, revenue, profit, or similar figures from model memory. If no reliable current source exists, explicitly say the evidence is insufficient.",
+    "9. Coverage: discuss evidence supporting your side, counterexamples or boundary conditions against your side, costs and benefits, risks, and time horizon. Do not focus on only one factor.",
+    "10. Integrity: do not fabricate data, misquote sources, present old data as current, turn webpage summaries into official facts, or state correlation as causation.",
+    "11. If the user message contains moderator follow-up/guidance, answer it in a separate paragraph and explain whether new evidence supports your stance.",
+    "12. Be sharp but rational. No personal attacks.",
+    "13. Obey any reply word limit provided in the user message; otherwise target 260-420 English-equivalent words, or a comparable length in the target language.",
+    `14. ${topicLanguageInstruction(topic)}`
   ].join("\n");
 }
 
@@ -372,17 +486,25 @@ export function buildModeratorSystemPrompt(topic: string) {
     `Topic: ${topic}`,
     "",
     "You have two modes:",
-    "[Inter-round commentary] Summarize the current core disagreement, judge which side is more persuasive, and propose one new follow-up angle in about 150-220 words.",
-    "[Final summary] Output a Markdown research report containing both sides' core arguments, key evidence, formulas/derivations, root disagreements, reconcilable disagreements, balanced assessment, final conclusion, and limitations.",
+    "[Inter-round commentary] Your commentary must include four clearly labeled sections:",
+    "  (a) Core disagreement: What is the central factual or logical dispute this round?",
+    "  (b) Logic audit: Identify specific reasoning fallacies in EITHER side's argument this round. Name the agent (A or B), the specific claim, and the fallacy type (e.g. slippery slope, false dichotomy, appeal to authority, survivorship bias, cherry-picking, correlation-as-causation, evidence insufficient for conclusion). If no clear fallacy exists, say so explicitly - do not fabricate one.",
+    "  (c) Blind spot: Identify one important dimension, factor, or shared assumption that BOTH sides are ignoring or taking for granted. Frame it as a specific question that both sides must address in the next round.",
+    "  (d) Follow-up angle: Propose one new direction to deepen the debate.",
+    "Target 220-320 words total unless the configured non-final reply limit is lower.",
+    "[Final summary] Output a Markdown research report with a fixed section structure: factual consensus, factual disputes, value and stance disputes, evidence and formula table, conditional conclusions, unresolved questions, balanced assessment and final conclusion, and methodology limitations.",
     "All citations must use source IDs such as [S1]. Do not fabricate evidence.",
+    "Obey any non-final reply word limit provided in the user message. The limit does not apply to the final report.",
     "For financial, stock-price, or market data, state currency, date/retrieval time, and source conflicts. Do not treat old data as real-time data.",
     "Also evaluate whether both sides were comprehensive and honest with evidence. Call out assertions that were not supported by evidence.",
     topicLanguageInstruction(topic)
   ].join("\n");
 }
 
-function auditSpeech(content: string, evidence: EvidenceItem[], shared: SharedDebateContext) {
+function auditSpeech(content: string, evidence: EvidenceItem[], shared: SharedDebateContext, round: number, totalRounds: number, responseWordLimit?: number) {
   const issues: string[] = [];
+  const lengthIssue = replyLimitIssue(content, responseWordLimit);
+  if (lengthIssue) issues.push(lengthIssue);
   const citedIds = extractEvidenceIds(content);
   const availableIds = new Set((evidence || []).map((item) => item.id));
   const validCitations = citedIds.filter((id) => availableIds.has(id));
@@ -412,14 +534,127 @@ function auditSpeech(content: string, evidence: EvidenceItem[], shared: SharedDe
   if (latestModeratorGuidanceText(shared.moderatorGuidance) && !/moderator|follow-up|guidance|respond|answer|主持人|追问|引导|回应/i.test(content)) {
     issues.push("The speech does not explicitly answer the moderator's inter-round follow-up. Add a separate response explaining whether evidence supports the new direction.");
   }
+  const isConvergenceRound = totalRounds > 1 && round === totalRounds;
+  if (isConvergenceRound) {
+    const conditionalPattern = /under\s+.*conditions?|if\s+.*then|when\s+.*holds|my position holds when|opponent.*correct when|opponent.*preferable when|在.*条件下|在.*條件下|如果.*那么|如果.*那麼|当.*时|當.*時|对方.*正确|對方.*正確|我的立场.*成立|我的立場.*成立|条件.*成立|相手.*正しい|私の立場.*成立|조건.*성립|상대.*옳|제 입장.*유효/i;
+    if (!conditionalPattern.test(content)) {
+      issues.push("Convergence round requires conditional conclusions: state under what conditions the opponent is correct, and under what conditions your position holds.");
+    }
+  } else if (round > 1) {
+    const steelmanPattern = /strongest point|most compelling argument|strongest claim|best argument|steel-?man|对方最有力|對方最有力|对方最强|對方最強|最有说服力|最有說服力|最强的论点|最強的論點|最强的观点|最強的觀點|最も説得力|最も強い主張|相手の最も|가장 강력한|가장 설득력/i;
+    if (!steelmanPattern.test(content)) {
+      issues.push("Missing steel-man: before rebutting, restate the opponent's strongest argument in 1-2 sentences. Start with a phrase like 'The opponent's strongest point is...'");
+    }
+  }
+  const concessionPattern = /I concede|I acknowledge that|I grant that|fair point|must admit|opponent is right that|我承认|我承認|我让步|我讓步|对方有道理|對方有道理|不得不承认|不得不承認|确实有道理|確實有道理|对方说得对|對方說得對|認めざるを得|認めます|相手の指摘は正しい|譲歩|인정하지 않을 수 없|인정합니다|상대방의 지적이 맞|상대의 지적이 맞|양보/i;
+  if (!concessionPattern.test(content)) {
+    issues.push("Missing concession: end your speech with a concession paragraph identifying one opposing argument you cannot fully refute. Start with 'I concede that...' or equivalent.");
+  }
   return issues;
 }
 
-function buildModeratorContext(round: number, type: "commentary" | "final", compactLevel: number, shared: SharedDebateContext) {
+function formatReplyLimitForPrompt(limit?: number) {
+  const wordLimit = Number(limit);
+  if (!Number.isFinite(wordLimit) || wordLimit <= 0) return "Reply length limit: none.";
+  return [
+    `Reply length limit: maximum ${Math.round(wordLimit)} words/CJK characters for the entire non-final reply.`,
+    "This is a hard cap for one agent's whole response, not a per-section limit.",
+    "Before writing, estimate whether a complete answer would exceed this limit. If it would, summarize before output: preserve the strongest claims, source IDs, formulas, moderator guidance response, steel-man, and concession, but compress examples and secondary explanation.",
+    "This limit does not apply to the moderator's Final Conclusion."
+  ].join(" ");
+}
+
+function normalizedReplyLimit(limit?: number) {
+  const value = Number(limit);
+  return Number.isFinite(value) && value > 0 ? Math.round(value) : 0;
+}
+
+function replyLimitIssue(content: string, limit?: number) {
+  const max = normalizedReplyLimit(limit);
+  if (!max) return "";
+  const actual = estimateReplyLengthUnits(content);
+  if (actual <= max) return "";
+  return `Reply too long: ${actual} estimated words/CJK characters for the whole response; configured limit is ${max}. Compress the entire response under the limit while preserving required citations, formulas, moderator-guidance response, steel-man, and concession.`;
+}
+
+export function estimateReplyLengthUnits(text: string) {
+  const units = String(text || "").match(replyUnitPattern()) || [];
+  return units.filter((part) => isCountedReplyUnit(part)).length;
+}
+
+function hardClampReplyToLimit(text: string, limit?: number) {
+  const max = normalizedReplyLimit(limit);
+  if (!max || estimateReplyLengthUnits(text) <= max) return text;
+  const parts = String(text || "").match(replyUnitPattern()) || [];
+  let count = 0;
+  let output = "";
+  for (const part of parts) {
+    const counted = isCountedReplyUnit(part);
+    if (counted && count + 1 > max) break;
+    output += part;
+    if (counted) count += 1;
+  }
+  return output.trimEnd();
+}
+
+function replyUnitPattern() {
+  return /[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]|[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*|[^A-Za-z0-9\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]+/g;
+}
+
+function isCountedReplyUnit(part: string) {
+  return /^[\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\u3040-\u30ff\u1100-\u11ff\u3130-\u318f\uac00-\ud7af]$/.test(part) || /^[A-Za-z0-9]+(?:[-'][A-Za-z0-9]+)*$/.test(part);
+}
+
+function buildModeratorContext(round: number, type: "commentary" | "final", compactLevel: number, shared: SharedDebateContext, responseWordLimit?: number) {
   const isFinal = type === "final";
   const messageLimit = isFinal ? (compactLevel > 0 ? 500 : 900) : 700;
   const evidenceLimit = isFinal ? (compactLevel > 0 ? 60 : 90) : 30;
   const evidenceSummaryLimit = isFinal ? (compactLevel > 0 ? 120 : 180) : 140;
+  const finalInstruction = [
+    "Write the final summary as a Markdown research report using the EXACT section structure below.",
+    topicLanguageInstruction(shared.topic),
+    "All citations must use source IDs such as [S1]. Do not fabricate evidence.",
+    "",
+    "Required sections (use these exact headings, translated to the target language):",
+    "",
+    "## 1. Factual Consensus",
+    "Facts and data points that both sides agree on or did not dispute.",
+    "",
+    "## 2. Factual Disputes",
+    "Where the two sides disagree on facts. For each dispute: state both sides' claims, cite evidence IDs, and assess which side's evidence is stronger and why.",
+    "",
+    "## 3. Value & Stance Disputes",
+    "Disagreements rooted in different values, priorities, or risk tolerances (e.g. efficiency vs equity, short-term vs long-term). These are not resolvable by evidence alone - label them clearly.",
+    "",
+    "## 4. Evidence & Formula Table",
+    "| Claim | Pro evidence | Con evidence | Verdict |",
+    "| --- | --- | --- | --- |",
+    "(Fill with the key contested claims and the evidence each side provided)",
+    "",
+    "## 5. Conditional Conclusions",
+    "State conclusions in conditional form:",
+    "- If [condition X] holds -> the pro position is stronger, because ...",
+    "- If [condition Y] holds -> the con position is stronger, because ...",
+    "Draw from both sides' convergence-round boundary-mapping if available.",
+    "",
+    "## 6. Unresolved Questions",
+    "Key questions exposed by the debate that neither side answered satisfactorily. These represent the frontier of the analysis.",
+    "",
+    "## 7. Balanced Assessment & Final Conclusion",
+    "Your overall judgment as moderator. Be direct about which side had the stronger overall case, and state your confidence level and the main reason for remaining uncertainty.",
+    "",
+    "## 8. Methodology Limitations",
+    "Limitations of this debate format, evidence gaps, potential biases in source selection."
+  ].join("\n");
+  const commentaryInstruction = [
+    "Write inter-round commentary in the required output language using four clearly labeled sections:",
+    formatReplyLimitForPrompt(responseWordLimit),
+    "(a) Core disagreement: What is the central factual or logical dispute this round?",
+    "(b) Logic audit: Identify specific reasoning fallacies in either side's argument this round. Name the agent, claim, and fallacy type. If no clear fallacy exists, say so explicitly.",
+    "(c) Blind spot: Identify one important dimension, factor, or shared assumption that both sides are ignoring. Frame it as a specific question both sides must address next round.",
+    "(d) Follow-up angle: Propose one new direction to deepen the debate.",
+    "Target 220-320 words total unless the configured reply limit is lower."
+  ].join("\n");
   return [
     `Topic: ${shared.topic}`,
     topicLanguageInstruction(shared.topic),
@@ -432,9 +667,7 @@ function buildModeratorContext(round: number, type: "commentary" | "final", comp
     "Evidence pool:",
     formatEvidenceForModerator(selectEvidenceForModerator(shared, evidenceLimit), evidenceSummaryLimit),
     "",
-    isFinal
-      ? "Write the final summary as a Markdown research report in the required output language. Include both sides' core arguments, an evidence table, a formulas/derivations table, root disagreements, reconcilable disagreements, balanced assessment, final conclusion, and limitations."
-      : "Write inter-round commentary in the required output language: summarize the core disagreement, identify which side is currently more persuasive, and propose the next follow-up angle."
+    isFinal ? finalInstruction : commentaryInstruction
   ].join("\n");
 }
 

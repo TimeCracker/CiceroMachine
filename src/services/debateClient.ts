@@ -10,6 +10,12 @@ export async function createDebateSession(config: Config, mock: boolean): Promis
   return response.json();
 }
 
+export async function fetchDebateSession(id: string): Promise<DebateSessionSnapshot> {
+  const response = await fetch(`/api/debates/${encodeURIComponent(id)}`);
+  if (!response.ok) throw new Error(await errorText(response));
+  return response.json();
+}
+
 export function openDebateEvents(id: string, onEvent: (event: DebateSessionEvent) => void, onError: (error: Event) => void) {
   const source = new EventSource(`/api/debates/${encodeURIComponent(id)}/events`);
   const eventTypes: DebateSessionEvent["type"][] = [

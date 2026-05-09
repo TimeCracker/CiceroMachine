@@ -1,9 +1,13 @@
-import { createIcons, Download, Pause, Play, RotateCcw, Square, StepForward } from "lucide";
+import { ChevronDown, ChevronUp, ChevronsDown, ChevronsUp, createIcons, Download, Pause, Play, RotateCcw, Square, StepForward } from "lucide";
 
 export function mountIcons() {
   createIcons({
     icons: {
       Download,
+      ChevronDown,
+      ChevronUp,
+      ChevronsDown,
+      ChevronsUp,
       Pause,
       Play,
       RotateCcw,

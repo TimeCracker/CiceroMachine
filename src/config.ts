@@ -82,6 +82,8 @@ export const DEFAULT_CONFIG: Config = {
   apiKey: "",
   model: "deepseek-v4-flash",
   maxTokens: 1400,
+  responseWordLimitEnabled: false,
+  responseWordLimit: 420,
   temperature: 0.65,
   timeoutSeconds: 60,
   deepSeekFinalThinking: true,

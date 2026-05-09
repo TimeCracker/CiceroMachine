@@ -13,8 +13,8 @@
   </p>
 
   <p>
-    <strong>バックエンド型 3 独立 Agent 討論ワークベンチ</strong><br />
-    賛成・反対の Agent が発言順に検索して討論し、Moderator が証拠、数式、最終結論をまとめます。
+    <strong>証拠駆動の 3 Agent 対立-収束型討論ワークベンチ</strong><br />
+    対立は情報を引き出すための手段であり、収束は真理へ近づくための目的です。
   </p>
 
   <p>
@@ -29,29 +29,51 @@
 
 ## これは何？
 
-Cicero Machine は、バックエンド Agent サービスとフロントエンドのワークベンチで構成される調査・討論ツールです。論題と API Key を入力すると、バックエンドはメモリ上に討論 session を作成し、3 つの独立した AgentRuntime を実行します。
+Cicero Machine は、バックエンド Agent サービスとフロントエンドのワークベンチで構成される調査・討論ツールです。論題と API Key を入力すると、バックエンドはメモリ上に討論 session を作成し、3 つの独立した AgentRuntime を実行します。設計思想は、**十分に長い対立で情報を引き出し、十分に精密な収束で真理に近づく**ことです。
+
+フロントエンドは設定、一時停止/再開、SSE リアルタイム表示、source リンク、返信の折りたたみ、最終結論 preview、Markdown export を担当します。バックエンドは 3 Agent の orchestration、Web 検索、証拠登録、監査、収束、レポート生成を担当します。
 
 | Agent | 役割 | 独立状態 | 内容 |
 | --- | --- | --- | --- |
-| A | 賛成側 | 独立 history、memory、source pool、search log | 自分の発言前に支持証拠を検索し、賛成側の論点を組み立て、反論に応答します |
-| B | 反対側 | 独立 history、memory、source pool、search log | A の現在ラウンド発言を読んでから反例やリスクを検索し、前提を攻撃します |
-| C | Moderator | 独立 memory、guidance、audit log | ラウンド間レビュー、次の問いの提示、最終 Markdown レポートの生成を行います |
+| A | 賛成側 | 独立 history、memory、source pool、search log | 自分の発言前に支持証拠を検索し、賛成側の論点を組み立て、反論に応答し、完全には否定できない相手側の論点を認めます |
+| B | 反対側 | 独立 history、memory、source pool、search log | A の現在ラウンド発言を読んでから反例やリスクを検索し、前提を攻撃し、自分の立場が成り立つ境界条件を示します |
+| C | Moderator | 独立 memory、guidance、audit log | ラウンド間の論理監査、盲点の特定、次ラウンドの問い、構造化 Markdown レポートの生成を行います |
 
 A/B/C は private conversation history を共有しません。共有するのは、バックエンド orchestrator を通じた公開発言、グローバル source ID、ユーザー追加要素、Moderator guidance だけです。1 つの DeepSeek または他の LLM API Key を 3 Agent で共用できます。
+
+## 討論メカニクス
+
+討論は 3 つのフェーズで進みます。
+
+| フェーズ | 目的 | ルール |
+| --- | --- | --- |
+| Opening round | 双方の初期分析フレームを作る | A/B が証拠を検索し、主要変数、数式、初期の境界条件を示し、必要な譲歩を行います |
+| Clash rounds | 情報不足と推論の弱点を露出させる | 各発言は相手の最も強い主張を steel-man してから反論し、最後に具体的な譲歩を置きます。Moderator は核心的な不一致、論理監査、共通の盲点、次の follow-up angle を提示します |
+| Convergence round | それぞれの立場の正確な境界を描く | A/B は単純な攻撃を止め、相手が正しくなる条件、自分の立場が成立する条件、結論を左右する未解決の事実を示します |
+
+最終レポートは固定構造です：事実上の合意、事実上の争点、価値・立場の争点、証拠と数式の表、条件付き結論、未解決の問い、均衡評価と最終結論、方法論上の限界。すべての事実判断は `[S1]`、`[S2]` のような source ID を引用します。
 
 ## 主な機能
 
 - **3 つの独立 AgentRuntime**：A/B/C はバックエンド側で別々の history、memory、証拠プール、検索ログ、audit state を持ちます。
 - **発言順のシリアル検索**：各ラウンドで A が検索して発言し、B は A の現在発言を読んでから検索して反論します。検索 API の同時実行による rate limit を抑えます。
+- **Steel-man と必須の譲歩**：A/B は反論前に相手の最も強い主張を要約し、各発言で完全には否定できない相手側の論点を 1 つ認めます。
+- **Moderator の論理監査**：C のラウンド間コメントは核心的な不一致、論理監査、共通の盲点、follow-up angle を必ず含み、次ラウンドへ反映されます。
+- **最終ラウンドの条件付き収束**：A/B は、それぞれの立場がどの条件で成立するかを示し、複雑な問題を絶対的な勝敗へ押し込まないようにします。
 - **Web 証拠検索**：Bocha API、Tavily API、OpenAI/Anthropic native search、hybrid mode に対応。
 - **DeepSeek 対応**：DeepSeek OpenAI-compatible Chat Completions を標準対応し、同じ API Key を全 Agent で使えます。
 - **グローバル source ID**：バックエンド `EvidenceRegistry` が `S1/S2/S3...` を採番し、URL を全体で重複排除し、どの Agent・ラウンド・query が発見または引用したかを記録します。
 - **クリック可能な出典**：本文中の `[S1]`、`[S2]` は出典リンクとして表示されます。
 - **Moderator guidance を次ラウンドへ反映**：C の問いは A/B に broadcast され、次回検索と発言 task に注入されます。
+- **検索計画の fallback**：LLM による search query 生成が失敗した場合でも、ローカル fallback query で討論を継続します。
 - **一時停止と再開**：討論を一時停止し、新しい考慮要素を追加して続行できます。
+- **同じバックエンド session の復元**：ブラウザをリロードすると、フロントエンドは直近のバックエンド in-memory session への再接続を試みます。バックエンドプロセスが動いていれば、完了後のレポートを回収できます。
+- **生成中インジケーター**：新しい返信を生成している間、最新コンテンツの後ろに呼吸するマーカーを表示し、システムが動作中であることを示します。
+- **折りたたみ表示**：A/B/C の各返信には個別の折りたたみボタンがあり、Final Conclusion も独立して折りたためます。最終結論以外の全返信を一括で折りたたむこともできます。
+- **任意の返信長制限**：`Reply word limit except final` はデフォルトでオフです。有効化した場合のみ、A/B/C の非最終の 1 回分の完全な返信を制限します。Final Conclusion は対象外です。
 - **最終結論の Markdown 表示**：見出し、リスト、表、リンク、source 参照をアプリ内で表示。
 - **自動継続と fallback**：最終レポートが途中で切れた場合は自動継続し、モデル呼び出しが 2 回失敗した場合は明示的に labeled local fallback Markdown を表示します。
-- **Markdown エクスポート**：最終レポート、証拠 URL、source attribution、全 transcript を出力できます。
+- **堅牢な Markdown エクスポート**：最終レポート、証拠 URL、source attribution、全 transcript を出力できます。バックエンド export endpoint が利用できない場合は、ブラウザ内の現在の討論 snapshot から Markdown を生成します。
 
 ## ワークフロー
 
@@ -91,17 +113,19 @@ npm run dev
 | コマンド | 説明 |
 | --- | --- |
 | `npm run dev` | バックエンドと Vite フロントエンドを同時起動し、`/debate.html` を開きます |
+| `npm run dev:awake` | macOS で開発サービスを起動し、長時間討論向けにシステムスリープを防ぎます |
 | `npm run dev:server` | Express backend TypeScript watcher だけを起動 |
 | `npm run dev:web` | Vite frontend だけを起動し、`/api` を backend に proxy |
 | `npm run check` | TypeScript 型チェック |
 | `npm run test` | Vitest 単体テストを実行 |
 | `npm run build` | フロントエンド本番 assets をビルドし、型チェックも実行 |
 | `npm start` | 本番モードで Express backend を起動し、`dist/` を配信 |
+| `npm run start:awake` | macOS で本番モードを起動し、システムスリープを防ぎます |
 | `npm run preview` | Vite 静的ビルドだけを preview。backend agent API は動きません |
 
 ## デプロイ
 
-現在のバージョンは静的フロントエンドだけではありません。本番デプロイには長時間実行できる Node.js service が必要です。ビルド後、Express backend が `dist/` を配信し、`/api/debates` と SSE event stream を提供します。
+本番デプロイには長時間実行できる Node.js service が必要です。ビルド後、Express backend が `dist/` を配信し、`/api/debates` と SSE event stream を提供します。
 
 ```bash
 npm install
@@ -125,6 +149,8 @@ npm start
 
 - API Key をソースコードにハードコードしないでください。
 - まだユーザーシステム、データベース、tenant isolation はありません。公開運用する場合は、認証、rate limit、ログの秘匿化、コスト制御、session cleanup を追加してください。
+- Session はバックエンドプロセスのメモリ上に保存され、DB には書き込まれません。ブラウザのリロードでは同じバックエンドプロセス内の session を復元できますが、バックエンド再起動後は実行中の討論を復元できません。
+- PC がシステムスリープに入ると、Node プロセスと provider request も停止する可能性があります。macOS で長時間実行する場合は `npm run dev:awake` または `npm run start:awake` を使ってください。
 - 検索 API には rate limit や quota があります。現在は発言順にシリアル検索し、単発の検索失敗は degrade しますが、quota が尽きた場合は provider warning が表示されます。
 
 ## プロジェクト構成
@@ -153,6 +179,7 @@ npm start
 | API | 目的 |
 | --- | --- |
 | `POST /api/debates` | 討論 session を作成して開始 |
+| `GET /api/debates/:id` | リロード後の復元用に現在の session snapshot を取得 |
 | `GET /api/debates/:id/events` | SSE で status、message、evidence、final report、error を配信 |
 | `POST /api/debates/:id/pause` | 現在の API 呼び出し後に一時停止 |
 | `POST /api/debates/:id/resume` | ユーザー追加要素を送って再開 |
@@ -187,6 +214,8 @@ npm start
 - A/B の発言は提供済み source ID を引用する必要があり、偽の出典を減らします。
 - 金融・マーケットデータは構造化証拠を優先し、通常の Web ページは背景情報として扱います。
 - Moderator の最終レポートは rendered Markdown として表示され、元の Markdown も export できます。
+- `Reply word limit except final` は任意の制約で、デフォルトではオフです。有効化すると、prompt、監査、圧縮、ローカル fallback clamp により非最終返信を制限します。
+- フロントエンド export はバックエンド Markdown を優先し、バックエンドが利用できない場合はブラウザ内の現在 snapshot から Markdown を生成します。
 - `?mock=1` で実 API Key なしに 1 から 10 ラウンドの回帰テストを実行できます。
 
 ## License
