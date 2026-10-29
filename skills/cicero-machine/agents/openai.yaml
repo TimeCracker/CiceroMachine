@@ -1,0 +1,13 @@
+interface:
+  display_name: Cicero Machine 辩论研究
+  short_description: GPT 正反方独立检索与多轮辩论，主持人核验证据并给出条件性结论
+  default_prompt: 使用 $cicero-machine 对我给出的辩题开展三轮 GPT agent 辩论，只使用 ChatGPT 内置搜索，并输出可追溯的条件性结论。
+  icon_small: assets/icon.svg
+  icon_large: assets/icon.svg
+policy:
+  products:
+  - chatgpt
+  - codex
+  - api
+  - atlas
+  allow_implicit_invocation: true
