@@ -1,0 +1,521 @@
+{
+  "schema_version": 1,
+  "release_date": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "upstream": {
+    "repository": "https://github.com/TimeCracker/CiceroMachine",
+    "branch": "main",
+    "commit": "8c9ebf608f5d9c9e3838c2149efc561ea7e7c8dd",
+    "tree": "02867b039349b849d1cde8ce4188197973780a4b",
+    "commit_date_utc": "2026-05-09T11:11:04Z"
+  },
+  "counts": {
+    "upstream_paths": 56,
+    "upstream_files": 47,
+    "upstream_directories": 9,
+    "added_files": 13,
+    "modified_files": 0,
+    "deleted_files": 0,
+    "renamed_files": 0,
+    "total_release_files": 60
+  },
+  "skill_provenance": {
+    "existing_archive": "cicero-machine-chatgpt-skill.zip",
+    "archive_sha256": "105313d0270fafaf2c30600420c14d34a36b67e9065738f57b31101ea447bed9",
+    "archive_skill_prefix": "cicero-machine-chatgpt-skill/skills/cicero-machine/",
+    "byte_identical_to_existing_installed_skill": true,
+    "skill_files_reused_unchanged": 7,
+    "new_skill_created": false,
+    "core_skill_updated": false
+  },
+  "publication": {
+    "distribution_method": "separate branch and pull request",
+    "main_direct_write": false,
+    "status_source": "GitHub branch and pull request state",
+    "download_packages": "pre-upload snapshots; GitHub copy updates publication documentation only"
+  },
+  "validation_scope": {
+    "official_skill_quick_validate": "passed on existing installed skill",
+    "independent_static_review": "no blocking findings",
+    "round_schedules_reviewed": [
+      1,
+      2,
+      3,
+      5
+    ],
+    "live_debate_run": false,
+    "upstream_npm_test_or_build_run": false
+  },
+  "upstream_files": [
+    {
+      "path": ".gitignore",
+      "size_bytes": 57,
+      "sha256": "175306b6e8a6941190c5da8c8b269e5e15af3cf2157858629757ae7ffdd8c4ae",
+      "git_blob_sha1": "4eba0763bbef8aada76d99bbad4f90e96f7a6e74",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "LICENSE",
+      "size_bytes": 1068,
+      "sha256": "450decd440ceaf206d92a85400547f10d4500d6b0e9ae24beee5c1de57369c90",
+      "git_blob_sha1": "c1ed54c61196904ec7e4a7f652eab7b5708de3ba",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "README.en.md",
+      "size_bytes": 15731,
+      "sha256": "b4c90570d1e6328cdf4b072baa3a2dd67416f117da326d06ce0ae4d88469a49d",
+      "git_blob_sha1": "3d78335b81fe26ab6a8263ed499235078fe5650c",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "README.ja.md",
+      "size_bytes": 16190,
+      "sha256": "fff0418bd14786efe21a85822ae5dc2e526060b6a32b498c71420a2ec07e9ef3",
+      "git_blob_sha1": "46ca0883204f3c23bbd3b537271cbb1c247b3660",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "README.ko.md",
+      "size_bytes": 15541,
+      "sha256": "4934391e6cdaa5a941d53392f2ae781298196d552d89749612df63713779c34c",
+      "git_blob_sha1": "d4f1ef1da4c5acd86aeeb7ef155a46c9493f205a",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 15836,
+      "sha256": "79e21a48fbcfeebee31732d7ed11c3a50ac047eebd59425f54adbd97f482efee",
+      "git_blob_sha1": "807fbd411a037f9922b51c4daf6c39c71cb77b8a",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "README.zh-CN.md",
+      "size_bytes": 219,
+      "sha256": "98f7b98dfd1f0c8cefa002652a25f45393a20c8b1356fac5dc48b69c60b6f40e",
+      "git_blob_sha1": "6b2d6695b483c028a6afb040eda6128e5ccf8647",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "README.zh-TW.md",
+      "size_bytes": 13277,
+      "sha256": "21cb21cca6268fd88dcf2a4636b807f7165d2df693a07deed7be4c78360d91db",
+      "git_blob_sha1": "183db42b5dbbed861ab20b3695f24a2d3e05cf81",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "debate.html",
+      "size_bytes": 11370,
+      "sha256": "6e8b36fc7f1fb553f5c6b708f0369947ebffa763eeb0122f244dec08aba14ae8",
+      "git_blob_sha1": "79192388e6005e0451e2eef51e445db6bea23b62",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "docs/assets/cicero-machine-hero.svg",
+      "size_bytes": 5061,
+      "sha256": "fe8763b667782afb21d3ec8bd8821d32fca202650f7bcf89f7f1b1678a3fb2e6",
+      "git_blob_sha1": "2b1bdf89caa94743f926a4c4837e72725aad1601",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "docs/assets/cicero-machine-icon.png",
+      "size_bytes": 144327,
+      "sha256": "f9bfe6c8ff8ccdeed3a6e16d27e3a4b3b311be29c47c8502379b79ed987a0216",
+      "git_blob_sha1": "5819f178d1820d3eebad04789f7b20dc9e5ca80b",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "docs/assets/cicero-machine-senate.png",
+      "size_bytes": 2069425,
+      "sha256": "b65028836dd66102a8bde0fbdfe3663314c056cc9cf1f840650db88594f229ae",
+      "git_blob_sha1": "b2fb1b93e816caaca805fdd8925232cb91fe3e3b",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "docs/assets/demo-final-report.jpg",
+      "size_bytes": 820575,
+      "sha256": "6fa4a1ef6bb97a83abf921e72ce47bc5024d5e6ef4348cd97964721c3b650c32",
+      "git_blob_sha1": "595dce3be8a5c15ab8975359e17a6c399cdbc805",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "docs/assets/demo-workbench-and-final-report.jpg",
+      "size_bytes": 3454963,
+      "sha256": "09a9eea92ee351785f120530a79d985fdfa643538fda6c3f81f45909cb047090",
+      "git_blob_sha1": "7c8a16adbbff35b4a63ecfb8da433d709f6504ad",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "docs/assets/demo-workbench.jpg",
+      "size_bytes": 4367492,
+      "sha256": "21a77d7d69abe6a7c4305bf4b14309bf1953c522798f6e4faacf8c64f8596732",
+      "git_blob_sha1": "f3801f2302f882f88de448396727f9f8b4c10fc7",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "package-lock.json",
+      "size_bytes": 109894,
+      "sha256": "2095e0265a47e76a68cdb784c8ea268c915f25720738eb88447c8d60a9354851",
+      "git_blob_sha1": "efef2c4938d051ab2670f715a6e920aa0b8c3eb9",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "package.json",
+      "size_bytes": 920,
+      "sha256": "f9f3b61fea7d5a169147a3971b86547f4197ebc9d1d6d8c00349fc35bad81b96",
+      "git_blob_sha1": "0b2faebfdae7b1b1c60d4a179b12492efb37fcce",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/domain/agents.test.ts",
+      "size_bytes": 10095,
+      "sha256": "f36a38a083c980c9e5d691ef3c90383e0ec9d50dcae0cf71b97b4110236715d5",
+      "git_blob_sha1": "76fe8bb36853f7c9a89ab4af131700d95cc5d0e6",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/domain/agents.ts",
+      "size_bytes": 55745,
+      "sha256": "5981880a213473d84cffa4042d04f535174ed1cfd8a8814627bd01cffa855e64",
+      "git_blob_sha1": "05c74f52e0eb5881d87bf73d67e2af7b1f8b035e",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/domain/evidenceRegistry.test.ts",
+      "size_bytes": 1460,
+      "sha256": "8b35f30e808f27b18fde11a5a4e393352e6e992b2c948fb2e252eb1c39edd03f",
+      "git_blob_sha1": "aaddf49786b6aae621b7744a02c69e7cf660c962",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/domain/evidenceRegistry.ts",
+      "size_bytes": 2352,
+      "sha256": "a20b65dd6bbeeb6a3645dacca55bb8528a51fb0d7f8901dff2e3c0a4f714b241",
+      "git_blob_sha1": "35ed1e08485e8ef52e0404c803e5da2c68b5311e",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/domain/orchestrator.test.ts",
+      "size_bytes": 3703,
+      "sha256": "10163e4fcfa3589157125769ad5d4db1ed4418fc4c47655c40073af427995438",
+      "git_blob_sha1": "7ad060decc6acf9aa040a462ca32bfa7d2cbd39d",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/domain/orchestrator.ts",
+      "size_bytes": 21865,
+      "sha256": "32af29d0b3e198b4478e444704e58a28454e2aaa19fe2106ce612291cb65bf0c",
+      "git_blob_sha1": "09b3014485858a2f10d63a27fe319928abf1d4c0",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/domain/utils.ts",
+      "size_bytes": 11345,
+      "sha256": "e8f75a0b2677676110f5fc8f7fe6939321f583644ec0cc07c4537469a450ca14",
+      "git_blob_sha1": "6e54a3a23cff41dd2a7acea083bbbb497ab813af",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/index.ts",
+      "size_bytes": 4687,
+      "sha256": "28fa9cf38b31ce0b2537c1c689e6a1b1a6a82ae651aa3b27f5431083be247774",
+      "git_blob_sha1": "b67e9dc7b0525cb2e2f158feead8b17fde559027",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/mock.ts",
+      "size_bytes": 15635,
+      "sha256": "405d39f466370537ddc8f353ea4361596046672a6a29b6b0374a6f3f45a54a51",
+      "git_blob_sha1": "a52c8f05b8904f435517d78bd3d0639ab33ee698",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/services/finance.ts",
+      "size_bytes": 5621,
+      "sha256": "4d52e52b116d274b93431b30566baa1f62c77c07c4fb4db22349dc453d8e6066",
+      "git_blob_sha1": "f2689894d1e1d9790355917322e29b8a477f9a8d",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/services/http.ts",
+      "size_bytes": 2249,
+      "sha256": "265e18407021fc13bf2687ca166a31b55139d38df448ba34ef805334831c73a8",
+      "git_blob_sha1": "35b73d68d66be8c870a2f70ab0890d3249449dbe",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/services/llm.ts",
+      "size_bytes": 3964,
+      "sha256": "8691d0e8b4617bab5b26d1a2417a951a8daeaf3df6830014da11015f61920782",
+      "git_blob_sha1": "5ac621d51a555ce65b71bcf782b87e740ed04122",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "server/services/search.ts",
+      "size_bytes": 16053,
+      "sha256": "9ecff9beb429b2c3d4f6894e1b4e09b2eba91a871f1f0b34538abb969fc8030f",
+      "git_blob_sha1": "01fdb891cdf168d11ffcdc7885bdb633a6e75126",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/config.ts",
+      "size_bytes": 2786,
+      "sha256": "8f877d25a3aba69a4d1aafd91ae3aea65810ac5ea8bf9ce748c06aeee7e56996",
+      "git_blob_sha1": "c0368d1b4ad91e2d4bc9a672b106a2324a006cd3",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/domain/errors.test.ts",
+      "size_bytes": 733,
+      "sha256": "b1710180ad1909840b94240fd767a981fcfe6893c80639551995c580794fbcea",
+      "git_blob_sha1": "b8972e019050091523172caddea33a8e5967f23f",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/domain/errors.ts",
+      "size_bytes": 776,
+      "sha256": "4c7374cb9cec36ff909c0896803b32ca7681a92eced31aa553a81f2e5de6623f",
+      "git_blob_sha1": "d8ca4b3a8df1e03b4ee9ed6c73cf9839674f84cf",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/domain/finalReport.test.ts",
+      "size_bytes": 1042,
+      "sha256": "f0c05facf2a41d9424e2047b77d141badb252ad4d52261dc9cfb39201475bf53",
+      "git_blob_sha1": "26a131b60b7729c466afda182b1869fffc64d5ad",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/domain/finalReport.ts",
+      "size_bytes": 1077,
+      "sha256": "15e4cac27c899a0a023d243d66701d93159640657eada4ee61cc68d3544f3bb5",
+      "git_blob_sha1": "6cbe1f3272dea860d614d103811f1129519a3b17",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/domain/llm.test.ts",
+      "size_bytes": 1244,
+      "sha256": "9f3e36afbf954907698ce5ad728b6f0afdf7713eca698c24a8a038a5a49cd78b",
+      "git_blob_sha1": "f5bde2d49d28f0d6cfcf929244fca9facdb72a38",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/domain/llm.ts",
+      "size_bytes": 1340,
+      "sha256": "38a74580ce4811e07eb238dd7a1341ab8b5ae6f4ce6c682505acb691b237a681",
+      "git_blob_sha1": "ced52be536a7a2865f6831b5c6a3d011b8c9ebc3",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/main.ts",
+      "size_bytes": 35821,
+      "sha256": "043caf02d2a8f376453427bd73b446e7c1c4a38227b90711ce9f5f3b7ef90871",
+      "git_blob_sha1": "367fe2307ce0715bd80dc144998a88280befbcb2",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/services/debateClient.ts",
+      "size_bytes": 2369,
+      "sha256": "10677fb22ade82c669666d15d7228e495cd035b95d4e57c1d99672edc129c01b",
+      "git_blob_sha1": "4a04ca7e26f9938c3acd112f8882760f387fb761",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/services/http.ts",
+      "size_bytes": 2525,
+      "sha256": "1cc5b236a4391187ff2f0d542724afaa33f42164267a29228262b70ee7b92d56",
+      "git_blob_sha1": "438eda85cf45ae30acf92485cb34063268cecc3d",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/styles.css",
+      "size_bytes": 17813,
+      "sha256": "bcff83b72f4d934c57ef19a99f72a15d02a4bbcecc75e5725dae00e85419a106",
+      "git_blob_sha1": "7ff3118fd0165b6e450cd54729df172e41fa4ca5",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/types.ts",
+      "size_bytes": 5175,
+      "sha256": "14cbe4f3dc9b16469d7e6c989ace4faa4f70c992b122218269e057a231f28a9f",
+      "git_blob_sha1": "f75840eb43b12a9133ac1fe7946b1f292257d362",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/ui/icons.ts",
+      "size_bytes": 469,
+      "sha256": "1db06eadb2af7a84566eefd3ee967ce7916e94b88b39d7bc8d147dbba31f5d6e",
+      "git_blob_sha1": "22d235b8b5365a16079218b7cad3239c67b1c0c0",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/ui/markdown.test.ts",
+      "size_bytes": 1424,
+      "sha256": "7ddedcd21962cf5693df250bd7724b01661f3d71da5a05216f800add1422fa0d",
+      "git_blob_sha1": "4e161441e7cefb6e8dba6b87033c9267f2b5273a",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "src/ui/markdown.ts",
+      "size_bytes": 5145,
+      "sha256": "2510c294137e5e4371b1e940bcb250325135dbac60f314f03020380143c2177a",
+      "git_blob_sha1": "ea975e6d6c0b40b3b8dcc8e11309b34b1afb8ddb",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "tsconfig.json",
+      "size_bytes": 489,
+      "sha256": "d96441930a05b4895c936b1250707b62cc659f72735ec80081e0c27b4783a4aa",
+      "git_blob_sha1": "b7582ba998dda9536c0710fa6bee8404f81c253f",
+      "git_mode": "100644",
+      "status": "unchanged"
+    },
+    {
+      "path": "vite.config.ts",
+      "size_bytes": 302,
+      "sha256": "28fc9dfc38d20c9f308b434db39a8f29b147894022e6f75bf0d987a9e5079fd7",
+      "git_blob_sha1": "5181419baf8be7dc14a4edbee32ee901fd4016e8",
+      "git_mode": "100644",
+      "status": "unchanged"
+    }
+  ],
+  "added_files": [
+    {
+      "path": "docs/chatgpt-skill/CAPABILITY-MAPPING.md",
+      "size_bytes": 10142,
+      "sha256": "1cee5e60981cb27d6dc954e7544c061f93042da0fc550b2548083aedebd3df8b",
+      "status": "added",
+      "origin": "release-documentation"
+    },
+    {
+      "path": "docs/chatgpt-skill/FILE-DIFF.md",
+      "size_bytes": 5547,
+      "sha256": "73b9b8ee7bd88b4bd759b8d37b41174516795ca716490eb8f4e92c11912dc7cd",
+      "status": "added",
+      "origin": "release-documentation"
+    },
+    {
+      "path": "docs/chatgpt-skill/README.md",
+      "size_bytes": 7606,
+      "sha256": "e32e3b8fca1d5953550426a778b5a6cdca6cfc580db6d391b0c8653f51336907",
+      "status": "added",
+      "origin": "release-documentation"
+    },
+    {
+      "path": "docs/chatgpt-skill/VALIDATION.md",
+      "size_bytes": 4872,
+      "sha256": "b6919ca1ea8b659a704fdda1920297b85f88ba81564209f7c399a56aac334ef6",
+      "status": "added",
+      "origin": "release-documentation"
+    },
+    {
+      "path": "docs/chatgpt-skill/release-manifest.json",
+      "sha256": null,
+      "size_bytes": null,
+      "hash_exclusion_reason": "Manifest cannot hash itself; not a digital signature.",
+      "status": "added",
+      "origin": "release-documentation"
+    },
+    {
+      "path": "docs/chatgpt-skill/verify_release.py",
+      "size_bytes": 7995,
+      "sha256": "7787ed74a44607aa79bae821f71321a1eaa8a37dc3983ad8772ab5a66e6daeae",
+      "status": "added",
+      "origin": "release-documentation"
+    },
+    {
+      "path": "skills/cicero-machine/LICENSE",
+      "size_bytes": 1068,
+      "sha256": "450decd440ceaf206d92a85400547f10d4500d6b0e9ae24beee5c1de57369c90",
+      "status": "added",
+      "origin": "existing-skill-byte-identical"
+    },
+    {
+      "path": "skills/cicero-machine/SKILL.md",
+      "size_bytes": 10648,
+      "sha256": "e1d7bc8837a81fcc32a3dd6cea0fc36b960bd2cd132dbb7b562327bcbae31eab",
+      "status": "added",
+      "origin": "existing-skill-byte-identical"
+    },
+    {
+      "path": "skills/cicero-machine/agents/openai.yaml",
+      "size_bytes": 486,
+      "sha256": "dcbeaedc4fd7a55c8d4b1ab03a9e164bd5d15dc92424a76a8a6e17f1b1ee339e",
+      "status": "added",
+      "origin": "existing-skill-byte-identical"
+    },
+    {
+      "path": "skills/cicero-machine/assets/icon.svg",
+      "size_bytes": 420,
+      "sha256": "e9301497fa98ef56aaca7ede0857b9a18dc06c34040f0679c609a6bf49b1d38b",
+      "status": "added",
+      "origin": "existing-skill-byte-identical"
+    },
+    {
+      "path": "skills/cicero-machine/references/report-template.md",
+      "size_bytes": 2294,
+      "sha256": "b0a6cbaa0c87e788e753765ecf83da4d4028f05a24c3d9dd7e460fde7dc0066b",
+      "status": "added",
+      "origin": "existing-skill-byte-identical"
+    },
+    {
+      "path": "skills/cicero-machine/references/roles.md",
+      "size_bytes": 4571,
+      "sha256": "d2cbd516e0e00cc6c34eb64856314ab3fccacfef65d66289c34143fe6685bdbb",
+      "status": "added",
+      "origin": "existing-skill-byte-identical"
+    },
+    {
+      "path": "skills/cicero-machine/references/upstream.md",
+      "size_bytes": 2937,
+      "sha256": "22a3b2eb001dc3515b221397c3593cd1fb482d2749147e2b5ec7f706723209ba",
+      "status": "added",
+      "origin": "existing-skill-byte-identical"
+    }
+  ]
+}
