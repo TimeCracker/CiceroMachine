@@ -2,11 +2,11 @@
 
 日期：2026-10-29（Asia/Shanghai）。检查对象为现有 ChatGPT Skill 与上游固定提交 `8c9ebf608f5d9c9e3838c2149efc561ea7e7c8dd` 的并存发布目录。
 
-## 已完成的检查
+## 初次发布包已完成的检查（历史记录）
 
 | 检查 | 结果与依据 |
 | --- | --- |
-| GitHub 基线与本地快照 | GitHub main 返回上述提交；本地 checkout HEAD 一致。递归 tree 完整返回，47 个 blob、9 个 tree，共 56 路径，没有原生 SKILL.md |
+| GitHub 基线与本地快照 | 初次打包时 GitHub main 返回上述提交；当时本地 checkout HEAD 一致。递归 tree 完整返回，47 个 blob、9 个 tree，共 56 路径，没有原生 SKILL.md |
 | 原文件保护 | 将全部 47 个原文件重新计算 Git blob SHA-1，与 GitHub 返回的 blob SHA 逐一比对通过；再记录 SHA-256；包括全部 README、源码、测试和二进制图片 |
 | 旧 Skill 复用 | 先前 `cicero-machine-chatgpt-skill.zip` 中的 `skills/cicero-machine/` 与当前已安装 Skill 的 7 个文件逐字节一致；发布目录继续原样复制 |
 | 官方 Skill 基础校验 | 对已安装原 Skill 运行当前 skill-creator 随附 `quick_validate.py`，结果为 `Skill is valid!`；检查 YAML frontmatter、必需字段与命名等基础规则 |
@@ -41,7 +41,7 @@
 
 最终打包时的实际核验输出记录在下方。使用者也可按 [发布说明](README.md) 在解压后的目录重复执行。
 
-### 实际离线核验结果
+### 初次下载 ZIP 的离线核验结果（历史记录）
 
 完整包：
 
@@ -82,3 +82,52 @@
 ```
 
 两个 ZIP 均在打包后检查 CRC、文件集合和逐文件字节，并解压到独立目录重新运行对应模式；全部通过才交付。
+
+## 安装文档增补（当前仓库）
+
+本次基于已合并 PR #1 的提交 `88cd5a4037387cb79f1ad374a10583d79ef74b97`，在主 README 和英文 README 原文前增加 Skill 入口，并新增 [INSTALLATION.md](INSTALLATION.md)。现有 7 个 Skill 文件及全部 TypeScript 程序、测试和依赖配置仍与 PR #1 相同。
+
+安装目录依据 OpenAI、Claude Code、DeepSeek Harness 与 OpenCode 的官方文档核对。复制命令区分用户级和项目级目录，目标已存在时不覆盖；跨框架加载步骤明确不等于完成 GPT/ChatGPT 专用契约的运行适配。
+
+当前清单保留原始基线哈希，并用 `modified_upstream_files` 明确列出两个 README 的预期更新内容，未放宽其他原文件的完整性校验。旧 ZIP 仍是初次下载快照，不能把其中的“原文件修改 0”用于当前文档 PR。
+
+本次只做文档、清单与验证工具维护；没有新建或修改 Skill，没有实际安装到本机 Codex/Claude/DeepSeek Harness，也没有声称跨框架在线运行测试已通过。
+
+### 当前仓库离线核验结果
+
+```json
+[
+  {
+    "mode": "full-release",
+    "upstream_commit": "8c9ebf608f5d9c9e3838c2149efc561ea7e7c8dd",
+    "upstream_files_verified": 47,
+    "unchanged_upstream_files_verified": 45,
+    "modified_upstream_files_verified": 2,
+    "added_files_present": 14,
+    "files_hash_checked": 60,
+    "local_links_checked": 80,
+    "pinned_upstream_links_checked": 14,
+    "icon_references_checked": 2,
+    "manifest_self_hash_excluded": true,
+    "live_debate_tested": false,
+    "errors": [],
+    "status": "PASS"
+  },
+  {
+    "mode": "additions-only",
+    "upstream_commit": "8c9ebf608f5d9c9e3838c2149efc561ea7e7c8dd",
+    "upstream_files_verified": 0,
+    "unchanged_upstream_files_verified": 0,
+    "modified_upstream_files_verified": 0,
+    "added_files_present": 14,
+    "files_hash_checked": 13,
+    "local_links_checked": 30,
+    "pinned_upstream_links_checked": 14,
+    "icon_references_checked": 2,
+    "manifest_self_hash_excluded": true,
+    "live_debate_tested": false,
+    "errors": [],
+    "status": "PASS"
+  }
+]
+```

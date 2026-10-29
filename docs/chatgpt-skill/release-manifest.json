@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "release_date": "2026-10-29",
   "timezone": "Asia/Shanghai",
   "upstream": {
@@ -13,11 +13,11 @@
     "upstream_paths": 56,
     "upstream_files": 47,
     "upstream_directories": 9,
-    "added_files": 13,
-    "modified_files": 0,
+    "added_files": 14,
+    "modified_files": 2,
     "deleted_files": 0,
     "renamed_files": 0,
-    "total_release_files": 60
+    "total_release_files": 61
   },
   "skill_provenance": {
     "existing_archive": "cicero-machine-chatgpt-skill.zip",
@@ -32,7 +32,7 @@
     "distribution_method": "separate branch and pull request",
     "main_direct_write": false,
     "status_source": "GitHub branch and pull request state",
-    "download_packages": "pre-upload snapshots; GitHub copy updates publication documentation only"
+    "download_packages": "Initial pre-upload snapshots; current repository includes subsequent README and installation documentation updates."
   },
   "validation_scope": {
     "official_skill_quick_validate": "passed on existing installed skill",
@@ -44,7 +44,8 @@
       5
     ],
     "live_debate_run": false,
-    "upstream_npm_test_or_build_run": false
+    "upstream_npm_test_or_build_run": false,
+    "cross_framework_runtime_tested": false
   },
   "upstream_files": [
     {
@@ -69,7 +70,7 @@
       "sha256": "b4c90570d1e6328cdf4b072baa3a2dd67416f117da326d06ce0ae4d88469a49d",
       "git_blob_sha1": "3d78335b81fe26ab6a8263ed499235078fe5650c",
       "git_mode": "100644",
-      "status": "unchanged"
+      "status": "baseline-retained-with-listed-documentation-update"
     },
     {
       "path": "README.ja.md",
@@ -93,7 +94,7 @@
       "sha256": "79e21a48fbcfeebee31732d7ed11c3a50ac047eebd59425f54adbd97f482efee",
       "git_blob_sha1": "807fbd411a037f9922b51c4daf6c39c71cb77b8a",
       "git_mode": "100644",
-      "status": "unchanged"
+      "status": "baseline-retained-with-listed-documentation-update"
     },
     {
       "path": "README.zh-CN.md",
@@ -434,22 +435,29 @@
     },
     {
       "path": "docs/chatgpt-skill/FILE-DIFF.md",
-      "size_bytes": 5547,
-      "sha256": "73b9b8ee7bd88b4bd759b8d37b41174516795ca716490eb8f4e92c11912dc7cd",
+      "size_bytes": 6168,
+      "sha256": "e81b8e7c9859a608300fad7af592f02aa863a62ccb55e427048ec29b006e4789",
       "status": "added",
       "origin": "release-documentation"
     },
     {
+      "path": "docs/chatgpt-skill/INSTALLATION.md",
+      "status": "added",
+      "origin": "release-documentation",
+      "sha256": "ec38dc6f4e2f42ed094cd2f4cace1e26b0464373915decc7708d5b0675e2f0b9",
+      "size_bytes": 8951
+    },
+    {
       "path": "docs/chatgpt-skill/README.md",
-      "size_bytes": 7606,
-      "sha256": "e32e3b8fca1d5953550426a778b5a6cdca6cfc580db6d391b0c8653f51336907",
+      "size_bytes": 8473,
+      "sha256": "fa994f57a0022474df85edcb1216df2fd799c6cedeb33e090de9af7e204c5a98",
       "status": "added",
       "origin": "release-documentation"
     },
     {
       "path": "docs/chatgpt-skill/VALIDATION.md",
-      "size_bytes": 4872,
-      "sha256": "b6919ca1ea8b659a704fdda1920297b85f88ba81564209f7c399a56aac334ef6",
+      "size_bytes": 7085,
+      "sha256": "f1504e2d872f4dd14b4f1644efcd7d89471f73233406f2d5e3728125ec064b7e",
       "status": "added",
       "origin": "release-documentation"
     },
@@ -463,8 +471,8 @@
     },
     {
       "path": "docs/chatgpt-skill/verify_release.py",
-      "size_bytes": 7995,
-      "sha256": "7787ed74a44607aa79bae821f71321a1eaa8a37dc3983ad8772ab5a66e6daeae",
+      "size_bytes": 8797,
+      "sha256": "cecc59c90d3bf19ce048c3365fc274175d417a13e37f4afbd72f15634d3958d2",
       "status": "added",
       "origin": "release-documentation"
     },
@@ -516,6 +524,32 @@
       "sha256": "22a3b2eb001dc3515b221397c3593cd1fb482d2749147e2b5ec7f706723209ba",
       "status": "added",
       "origin": "existing-skill-byte-identical"
+    }
+  ],
+  "documentation_update": {
+    "date": "2026-10-29",
+    "base_commit": "88cd5a4037387cb79f1ad374a10583d79ef74b97",
+    "scope": "README entry points and host installation/compatibility guide; no skill runtime changes",
+    "runtime_adapters_implemented": false
+  },
+  "modified_upstream_files": [
+    {
+      "path": "README.en.md",
+      "status": "modified",
+      "change_kind": "documentation-insertion-only",
+      "baseline_git_blob_sha1": "3d78335b81fe26ab6a8263ed499235078fe5650c",
+      "git_blob_sha1": "5add5594ec19c902a532aa795cf96541e13bbd1e",
+      "sha256": "dd0ab25c91186c4db9ef94562d853bbd9329579f2da8bf24350ca8772e4519dc",
+      "size_bytes": 17018
+    },
+    {
+      "path": "README.md",
+      "status": "modified",
+      "change_kind": "documentation-insertion-only",
+      "baseline_git_blob_sha1": "807fbd411a037f9922b51c4daf6c39c71cb77b8a",
+      "git_blob_sha1": "5cd1494243e2cbb219a9353ea6c1710fd6e9a250",
+      "sha256": "6e09faac3315d3e26faff7d68b4ded0d2512f1e496035e38f7f8981d38a8961c",
+      "size_bytes": 17723
     }
   ]
 }

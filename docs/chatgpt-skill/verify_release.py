@@ -33,6 +33,7 @@ def main():
     errors = []
     originals = {item["path"]: item for item in manifest["upstream_files"]}
     additions = {item["path"]: item for item in manifest["added_files"]}
+    modifications = {item["path"]: item for item in manifest.get("modified_upstream_files", [])}
     expected = set(originals) | set(additions)
 
     def require(condition, message):
@@ -50,9 +51,15 @@ def main():
 
     require(len(originals) == manifest["counts"]["upstream_files"], "Original count mismatch")
     require(len(additions) == manifest["counts"]["added_files"], "Addition count mismatch")
+    require(len(modifications) == manifest["counts"]["modified_files"], "Modification count mismatch")
+    require(set(modifications) <= set(originals), "Modified path is absent from upstream baseline")
+    for relative, item in modifications.items():
+        require(item.get("baseline_git_blob_sha1") == originals.get(relative, {}).get("git_blob_sha1"),
+                "Modified file baseline mismatch: " + relative)
     require(not set(originals) & set(additions), "An addition collides with an original file")
     checked = 0
-    for item in list(additions.values()) + ([] if args.overlay else list(originals.values())):
+    current_originals = [modifications.get(relative, item) for relative, item in originals.items()]
+    for item in list(additions.values()) + ([] if args.overlay else current_originals):
         relative = item["path"]
         try:
             path = safe_file(relative)
@@ -156,6 +163,8 @@ def main():
         "mode": "additions-only" if args.overlay else "full-release",
         "upstream_commit": manifest["upstream"]["commit"],
         "upstream_files_verified": 0 if args.overlay else len(originals),
+        "unchanged_upstream_files_verified": 0 if args.overlay else len(originals) - len(modifications),
+        "modified_upstream_files_verified": 0 if args.overlay else len(modifications),
         "added_files_present": len(additions),
         "files_hash_checked": checked,
         "local_links_checked": local_links,
