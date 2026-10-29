@@ -1,6 +1,6 @@
 # CiceroMachine：ChatGPT Skill 发布说明
 
-本目录说明与原 TypeScript 应用并存的 ChatGPT Skill。Skill 入口为 [skills/cicero-machine/SKILL.md](../../skills/cicero-machine/SKILL.md)。原应用的 [README.md](../../README.md)、其他语言 README、前后端、测试、依赖配置和图片保持原样。
+本目录说明与原 TypeScript 应用并存的 ChatGPT Skill。Skill 入口为 [skills/cicero-machine/SKILL.md](../../skills/cicero-machine/SKILL.md)，各框架的加载目录和运行限制见 [INSTALLATION.md](INSTALLATION.md)。主 README 和英文 README 保留原文并增加 Skill 入口；其他语言 README、前后端、测试、依赖配置和图片保持原样。
 
 本次整理日期：**2026-10-29（Asia/Shanghai）**。上游基线：[`8c9ebf608f5d9c9e3838c2149efc561ea7e7c8dd`](https://github.com/TimeCracker/CiceroMachine/tree/8c9ebf608f5d9c9e3838c2149efc561ea7e7c8dd)。本封装通过独立分支和 Pull Request 加入原仓库，不改变上游应用的版本号，也不代表已发布 GitHub Release。
 
@@ -17,12 +17,13 @@
 | `CiceroMachine-github-release-2026-10-29.zip` | `CiceroMachine/` 下的完整原项目和新增目录 | 完整快照、审阅、备份 |
 | `CiceroMachine-chatgpt-skill-additions-2026-10-29.zip` | 仅 `skills/cicero-machine/` 与 `docs/chatgpt-skill/` | 向已有仓库的新分支上传，推荐 |
 
-完整包包含上游 **47 个文件**，对应递归树中的 **56 个路径（47 个文件、9 个目录）**；新增 **13 个文件**。原文件修改 0、删除 0、重命名 0。压缩包不含 `.git`、依赖安装目录、构建产物、凭据或研究会话。
+上表是初次整理的下载快照：包含上游 **47 个文件**，对应递归树中的 **56 个路径（47 个文件、9 个目录）**；新增 **13 个文件**，当时原文件修改 0。后续仓库文档更新又增加本安装指南，并在主 README 和英文 README 增补入口；当前相对原始基线为 **14 个新增文件、2 个 README 文档修改，程序代码修改 0、删除 0**。早先 ZIP 不包含这次文档增补，当前内容以仓库为准。
 
 ## 文件导航
 
 | 路径 | 用途 |
 | --- | --- |
+| [INSTALLATION.md](INSTALLATION.md) | ChatGPT、Codex、Claude Code、DeepSeek Harness 等加载步骤与运行适配边界 |
 | [SKILL.md](../../skills/cicero-machine/SKILL.md) | 运行契约、预算、串行调度、证据纪律、暂停恢复 |
 | [roles.md](../../skills/cicero-machine/references/roles.md) | A/B/C 约束及公开消息包 |
 | [report-template.md](../../skills/cicero-machine/references/report-template.md) | 八部分最终报告和来源附件 |
@@ -34,7 +35,9 @@
 | [release-manifest.json](release-manifest.json) | 固定提交、来源、原文件 Git blob SHA、SHA-256 与新增清单 |
 | [verify_release.py](verify_release.py) | 无第三方依赖的离线包完整性与引用检查 |
 
-## 安全地上传现有 GitHub 仓库
+## 初次下载包的上传方式
+
+这一节仅适用于尚未添加 Skill 的仓库。Skill 已通过 PR #1 加入本仓库 main，无需重新上传早先 ZIP；后续安装说明通过单独的文档 PR 更新。
 
 1. 解压**仅新增文件包**。包内的 `skills/`、`docs/` 对应原仓库根目录，不能多套一层项目文件夹。
 2. 在 `TimeCracker/CiceroMachine` 的当前 main 基础上建立新分支，例如 `add/chatgpt-skill`。
@@ -55,6 +58,8 @@ git diff --cached --stat
 上述 ZIP 是上传前的下载快照。仓库内版本沿用相同的 7 个 Skill 文件，补充本说明；当前分支和合并状态以 GitHub 上对应的 Pull Request 为准。
 
 ## 安装和运行
+
+完整的环境对照、复制命令、调用方法与尚未实现的适配项见 [INSTALLATION.md](INSTALLATION.md)。格式可加载不代表满足本 Skill 的 GPT/ChatGPT 内置搜索契约。
 
 安装单元是整个 `skills/cicero-machine/` 文件夹，须保留其中 7 个文件。使用目标环境实际提供的技能加载/导入流程；GitHub 上传本身不会让所有 ChatGPT 会话自动拥有该技能。当前已经安装的同版技能无需重复安装。
 
@@ -104,7 +109,7 @@ python3 docs/chatgpt-skill/verify_release.py
 python3 docs/chatgpt-skill/verify_release.py --overlay
 ```
 
-完整模式核验原项目与新增文件；overlay 模式仅核验新增文件，不能证明原项目完整。两者均检查相对文件引用、Skill 入口与元数据引用。清单不对自身做散列，也不是数字签名；Git blob SHA 用于与固定上游提交核对，不构成下载渠道的身份认证。
+完整模式核验未改动的原文件、清单明确列出的 README 更新及新增文件；overlay 模式仅核验新增文件，不能证明原项目或 README 更新完整。两者均检查相对文件引用、Skill 入口与元数据引用。清单不对自身做散列，也不是数字签名；Git blob SHA 用于内容核对，不构成下载渠道的身份认证。
 
 ## 许可
 

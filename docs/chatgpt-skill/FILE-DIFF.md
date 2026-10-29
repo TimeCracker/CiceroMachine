@@ -2,7 +2,9 @@
 
 整理日期：2026-10-29（Asia/Shanghai）。对照原仓库固定提交 `8c9ebf608f5d9c9e3838c2149efc561ea7e7c8dd`。
 
-**结论：47 个原文件完整保留，新增 13 个文件；修改 0、删除 0、重命名 0。**
+**当前相对原始基线：45 个原文件字节不变，2 个 README 保留原文并增加 Skill 说明，新增 14 个文件；程序代码修改 0、删除 0、重命名 0。**
+
+初次下载包与已合并 PR #1 的范围是新增 13 个文件、原文件修改 0。本次文档增补基于 PR #1 的合并提交 `88cd5a4037387cb79f1ad374a10583d79ef74b97`，新增安装指南并更新中英文 README、相关清单与验证资料；7 个 Skill 文件继续保持原样。
 
 GitHub 递归树的“56 个路径”包含 47 个文件和 9 个目录，不是 56 个文件。原始 TypeScript 项目与 Skill 封装共存，目录和运行载体不同。
 
@@ -12,6 +14,7 @@ GitHub 递归树的“56 个路径”包含 47 个文件和 9 个目录，不是
 | --- | --- |
 | `docs/chatgpt-skill/CAPABILITY-MAPPING.md` | 原版/Skill 能力差异与源码依据 |
 | `docs/chatgpt-skill/FILE-DIFF.md` | 本差异清单 |
+| `docs/chatgpt-skill/INSTALLATION.md` | 各宿主加载目录、复制步骤及运行时适配边界 |
 | `docs/chatgpt-skill/README.md` | 新增的安装、使用与新分支上传说明 |
 | `docs/chatgpt-skill/VALIDATION.md` | 实际检查结果及边界 |
 | `docs/chatgpt-skill/release-manifest.json` | 文件清单、基线、来源与内容哈希 |
@@ -39,18 +42,18 @@ GitHub 递归树的“56 个路径”包含 47 个文件和 9 个目录，不是
 
 先前 ZIP 的 SHA-256：`105313d0270fafaf2c30600420c14d34a36b67e9065738f57b31101ea447bed9`。
 
-## 完整保留的原文件（=）
+## 原文件状态（= / M）
 
-下列每一项均以 GitHub 返回的 Git blob SHA 与本地重新计算值核对；发布内容不作改写。完整 SHA-256/Git blob SHA 记录在包内 `docs/chatgpt-skill/release-manifest.json`。
+原始内容的 SHA-256/Git blob SHA 保留在 `release-manifest.json` 的 `upstream_files`；当前两个 README 的内容哈希单独列在 `modified_upstream_files`。其余 45 个原文件继续与上游基线逐字节一致。
 
 | 原路径 | 状态 |
 | --- | --- |
 | `.gitignore` | = 字节不变 |
 | `LICENSE` | = 字节不变 |
-| `README.en.md` | = 字节不变 |
+| `README.en.md` | M 保留原文，增加应用/Skill 双入口和安装位置表 |
 | `README.ja.md` | = 字节不变 |
 | `README.ko.md` | = 字节不变 |
-| `README.md` | = 字节不变 |
+| `README.md` | M 保留原文，增加 Skill 入口、安装与兼容性说明 |
 | `README.zh-CN.md` | = 字节不变 |
 | `README.zh-TW.md` | = 字节不变 |
 | `debate.html` | = 字节不变 |
@@ -95,7 +98,7 @@ GitHub 递归树的“56 个路径”包含 47 个文件和 9 个目录，不是
 
 ## 上传范围
 
-推荐将仅新增文件包解压，在新分支上传 `skills/cicero-machine/` 和 `docs/chatgpt-skill/`。不上传完整包内旧版原代码来覆盖更晚的 main。
+最初的增量 ZIP 只含 13 个新增文件，不包含这次 README 与安装指南增补。当前更新以文档 PR 的文件差异为准；原程序代码与 Skill 均不作改写。
 
 下载包生成时尚未推送。本目录通过独立分支和 Pull Request 加入原仓库；是否合并以 GitHub 状态为准。具体用法与验证命令见 `docs/chatgpt-skill/README.md`。
 

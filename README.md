@@ -27,6 +27,28 @@
   </p>
 </div>
 
+## 原应用与 ChatGPT Skill
+
+本仓库同时提供两种使用方式：
+
+| 入口 | 内容 | 如何使用 |
+| --- | --- | --- |
+| 原 TypeScript 应用 | `server/`、`src/`、`debate.html`：Express + Vite 辩论工作台 | 按下文“快速开始”安装依赖、配置模型及搜索服务并启动 |
+| [ChatGPT Skill](./skills/cicero-machine/SKILL.md) | `skills/cicero-machine/`：由宿主调度 A/B/C 的辩论工作流 | 阅读 [安装与兼容性说明](./docs/chatgpt-skill/INSTALLATION.md)，加载完整技能目录 |
+
+目前只有 **1 个 Skill**，其中包含正方、反方、主持人三个角色。Skill 运行不需要启动本仓库的 Web 应用。
+
+**格式可跨框架，当前运行契约面向 ChatGPT。** `SKILL.md` 采用 Agent Skills 格式，但本版本明确要求真实 GPT 子代理和 ChatGPT 内置搜索；不能据此宣称所有 Codex 环境都能运行，也不能把复制文件到 Claude Code 或 DeepSeek Harness 等同于完成适配。
+
+- **ChatGPT**：通过当前环境的技能管理流程加载 `skills/cicero-machine/`；已安装同版时无需重复安装。
+- **Codex CLI / IDE**：本地技能目录为 `.agents/skills/` 或 `~/.agents/skills/`；加载后仍须核对 GPT 子代理和搜索工具是否满足上述契约。
+- **Claude Code**：本地目录为 `.claude/skills/` 或 `~/.claude/skills/`；当前版本需适配模型、子代理调度与搜索约束后才能运行。
+- **DeepSeek Harness**：默认本地目录为 `.dsh/skills/` 或 `~/.dsh/skills/`，也支持 `.agents/skills/`；当前版本同样需要运行时适配。
+
+目录复制命令、调用方式和具体适配项见 [INSTALLATION.md](./docs/chatgpt-skill/INSTALLATION.md)。[能力映射](./docs/chatgpt-skill/CAPABILITY-MAPPING.md) 与 [验证记录](./docs/chatgpt-skill/VALIDATION.md) 区分已检查内容和未完成的端到端测试。
+
+---
+
 ## 这是什么？
 
 Cicero Machine 是一个“后端 Agent 服务 + 前端工作台”的研究与辩论工具。你输入辩题和 API Key 后，后端会创建一次内存中的辩论会话，并运行三个独立的 AgentRuntime。它的核心设计哲学是：**对抗要足够长，才能逼出信息；收束要足够精确，才能逼近真理。**

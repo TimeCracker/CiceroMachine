@@ -27,6 +27,22 @@
   </p>
 </div>
 
+## Web application and ChatGPT Skill
+
+This repository includes the original Express/Vite application and one [ChatGPT Skill](./skills/cicero-machine/SKILL.md) in `skills/cicero-machine/`. The skill contains three debate roles, not three separate skills, and runs through its host without starting the web application.
+
+The Agent Skills file format is portable, but this particular workflow requires real GPT subagents and ChatGPT built-in search. Loading its files in another tool does not satisfy that runtime contract. Codex environments must expose the required capabilities; Claude Code and DeepSeek Harness need a runtime adaptation before executing this version.
+
+| Local host | Project location | User location |
+| --- | --- | --- |
+| Codex CLI / IDE | `.agents/skills/cicero-machine/` | `~/.agents/skills/cicero-machine/` |
+| Claude Code | `.claude/skills/cicero-machine/` | `~/.claude/skills/cicero-machine/` |
+| DeepSeek Harness | `.dsh/skills/cicero-machine/` | `~/.dsh/skills/cicero-machine/` by default |
+
+See the [installation and compatibility guide](./docs/chatgpt-skill/INSTALLATION.md) for copy commands, host-specific invocation, DeepSeek Harness directory overrides, and the adaptation work still required. Existing application setup instructions follow below.
+
+---
+
 ## What is this?
 
 Cicero Machine is a research and debate tool built as a backend agent service plus a frontend workbench. After you enter a topic and API keys, the backend creates an in-memory debate session and runs three independent AgentRuntime instances. Its core design philosophy is: **make adversarial pressure long enough to surface information, then converge precisely enough to approach truth.**
